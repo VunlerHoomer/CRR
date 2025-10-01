@@ -42,10 +42,13 @@ const connectDB = async () => {
     }
 
     await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 30000,  // 增加到 30 秒
       socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,          // 添加连接超时
       maxPoolSize: 10,
       minPoolSize: 1,
+      bufferMaxEntries: 0,              // 禁用缓冲
+      bufferCommands: false,            // 禁用命令缓冲
     })
 
     console.log('✅ MongoDB 连接成功')
