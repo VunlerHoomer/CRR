@@ -19,33 +19,47 @@ const errorHandler = require('../src/middleware/errorHandler')
 const app = express()
 
 // 数据库连接（使用连接池）
-let isConnected = false
-
 const connectDB = async () => {
-  if (isConnected) {
-    console.log('使用现有数据库连接')
+  // 如果已经连接，直接返回
+  if (mongoose.connection.readyState === 1) {
+    console.log('✅ 使用现有数据库连接')
+    return
+  }
+
+  // 如果正在连接，等待连接完成
+  if (mongoose.connection.readyState === 2) {
+    console.log('⏳ 等待数据库连接...')
+    await new Promise(resolve => setTimeout(resolve, 1000))
     return
   }
 
   try {
-    const db = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/quiz-lottery', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
+    console.log('🔄 开始连接 MongoDB Atlas...')
+    console.log('MONGODB_URI:', process.env.MONGODB_URI ? '已配置' : '未配置')
+    
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI 环境变量未配置')
+    }
+
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
     })
 
-    isConnected = db.connections[0].readyState === 1
     console.log('✅ MongoDB 连接成功')
+    console.log('✅ 数据库名:', mongoose.connection.name)
+    console.log('✅ 连接状态:', mongoose.connection.readyState)
   } catch (error) {
     console.error('❌ MongoDB 连接失败:', error.message)
-    // Vercel 中即使数据库连接失败，也要让应用启动
-    // 可以返回友好的错误信息
+    console.error('❌ 错误详情:', error)
+    throw error
   }
 }
 
-// 每次函数调用时连接数据库
-connectDB()
+// 初始化数据库连接
+connectDB().catch(err => console.error('初始化数据库连接失败:', err))
 
 // 中间件
 app.use(express.json({ limit: '10mb' }))
@@ -90,12 +104,20 @@ app.use('/api/admin/lottery', require('../src/routes/admin/lottery'))
 app.use('/api/admin/users', require('../src/routes/admin/users'))
 
 // 健康检查
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  // 确保数据库已连接
+  await connectDB()
+  
+  // 检查 Mongoose 连接状态
+  const dbStatus = mongoose.connection.readyState === 1 ? '已连接' : '未连接'
+  
   res.json({
     code: 200,
     message: '服务运行正常',
     timestamp: new Date().toISOString(),
-    database: isConnected ? '已连接' : '未连接'
+    database: dbStatus,
+    mongooseState: mongoose.connection.readyState,
+    envCheck: process.env.MONGODB_URI ? '已配置' : '未配置'
   })
 })
 
