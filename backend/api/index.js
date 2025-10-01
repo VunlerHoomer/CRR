@@ -119,6 +119,16 @@ app.use(helmet({
 }))
 app.use(morgan('tiny'))
 
+// 确保每次请求都已连接数据库（避免 bufferCommands=false 时查询早于连接）
+app.use(async (req, res, next) => {
+  try {
+    await connectDB()
+    next()
+  } catch (err) {
+    res.status(500).json({ code: 500, message: '数据库连接失败', detail: err?.message })
+  }
+})
+
 // 限流中间件
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分钟
