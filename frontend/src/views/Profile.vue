@@ -17,7 +17,7 @@
             </div>
           </div>
         </div>
-        <el-button type="primary" @click="editProfile = true">编辑资料</el-button>
+        <el-button type="primary" @click="openEdit">编辑资料</el-button>
       </div>
 
       <div class="profile-content">
@@ -303,11 +303,7 @@ const saveProfile = async () => {
 onMounted(() => {
   if (userStore.isLoggedIn) {
     userStore.fetchUserInfo()
-    editForm.nickname = user.value?.nickname || ''
-    editForm.avatar = user.value?.avatar || ''
-    editForm.phone = user.value?.phone || ''
-    editForm.school = user.value?.school || ''
-    editForm.gender = user.value?.gender || ''
+    syncEditFormFromUser()
   }
 })
 
@@ -316,6 +312,20 @@ const genderText = (g) => {
   if (g === 'female') return '女'
   if (g === 'other') return '其他'
   return ''
+}
+
+// 每次打开编辑弹窗前，使用当前用户信息填充表单
+const syncEditFormFromUser = () => {
+  editForm.nickname = user.value?.nickname || ''
+  editForm.avatar = user.value?.avatar || ''
+  editForm.phone = user.value?.phone || ''
+  editForm.school = user.value?.school || ''
+  editForm.gender = user.value?.gender || ''
+}
+
+const openEdit = () => {
+  syncEditFormFromUser()
+  editProfile.value = true
 }
 </script>
 
