@@ -4,7 +4,7 @@ import axios from 'axios'
 
 const adminRequest = axios.create({
   baseURL: (import.meta.env.VITE_API_BASE_URL || 'https://crr-five.vercel.app/api') + '/admin',
-  timeout: 10000
+  timeout: 30000  // 增加到 30 秒
 })
 
 // 请求拦截器
