@@ -87,21 +87,21 @@ const banners = ref([
     description: '海量题库，智能出题，挑战你的知识极限',
     buttonText: '开始答题',
     action: 'quiz',
-    image: 'https://via.placeholder.com/1200x400/409eff/ffffff?text=智能答题系统'
+    image: 'https://placehold.co/1200x400/409eff/ffffff?text=智能答题系统'
   },
   {
     title: '趣味抽签功能',
     description: '随机抽取，公平公正，增加互动乐趣',
     buttonText: '立即抽签',
     action: 'lottery',
-    image: 'https://via.placeholder.com/1200x400/67c23a/ffffff?text=趣味抽签功能'
+    image: 'https://placehold.co/1200x400/67c23a/ffffff?text=趣味抽签功能'
   },
   {
     title: '实时互动社区',
     description: '实时排名，互动评论，打造学习社区',
     buttonText: '加入社区',
     action: 'ranking',
-    image: 'https://via.placeholder.com/1200x400/e6a23c/ffffff?text=实时互动社区'
+    image: 'https://placehold.co/1200x400/e6a23c/ffffff?text=实时互动社区'
   }
 ])
 
