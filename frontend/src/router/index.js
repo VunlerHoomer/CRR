@@ -44,6 +44,19 @@ const routes = [
     component: () => import('@/views/Profile.vue'),
     meta: { title: '个人中心', requiresAuth: true }
   },
+  // 任务中心路由
+  {
+    path: '/task-center',
+    name: 'TaskCenter',
+    component: () => import('@/views/TaskCenter.vue'),
+    meta: { title: '任务中心', requiresAuth: true }
+  },
+  {
+    path: '/task/quiz/:id',
+    name: 'TaskQuiz',
+    component: () => import('@/views/TaskQuiz.vue'),
+    meta: { title: '答题任务', requiresAuth: true }
+  },
   // 管理员路由
   {
     path: '/admin',
