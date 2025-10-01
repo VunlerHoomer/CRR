@@ -65,17 +65,51 @@ connectDB().catch(err => console.error('初始化数据库连接失败:', err))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL,
-    'http://localhost:3000',
-    'https://cityrunride-slkf60gl.edgeone.run',
-    /\.edgeone\.app$/,
-    /\.edgeone\.run$/,
-    /\.vercel\.app$/
-  ],
+  origin: function (origin, callback) {
+    // 允许的域名列表
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://localhost:3000',
+      process.env.FRONTEND_URL
+    ]
+    
+    // 允许的域名模式
+    const allowedPatterns = [
+      /\.edgeone\.app$/,
+      /\.edgeone\.run$/,
+      /\.vercel\.app$/,
+      /^https?:\/\/cityrunride-.*\.edgeone\.run$/
+    ]
+    
+    // 如果没有 origin（同源请求或某些工具），允许
+    if (!origin) {
+      return callback(null, true)
+    }
+    
+    // 检查是否在允许列表中
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    
+    // 检查是否匹配允许的模式
+    for (const pattern of allowedPatterns) {
+      if (pattern.test(origin)) {
+        return callback(null, true)
+      }
+    }
+    
+    // 开发环境允许所有
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true)
+    }
+    
+    // 其他情况拒绝
+    callback(new Error('Not allowed by CORS'))
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }))
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
