@@ -1,0 +1,150 @@
+const express = require('express')
+const { body, validationResult } = require('express-validator')
+const User = require('../models/User')
+const auth = require('../middleware/auth')
+
+const router = express.Router()
+
+// 获取用户信息
+router.get('/profile', auth, async (req, res) => {
+  try {
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: {
+        user: {
+          id: req.user._id,
+          phone: req.user.phone,
+          nickname: req.user.nickname,
+          avatar: req.user.avatar,
+          points: req.user.points,
+          level: req.user.level,
+          totalQuizCount: req.user.totalQuizCount,
+          correctQuizCount: req.user.correctQuizCount,
+          accuracy: req.user.accuracy,
+          totalLotteryCount: req.user.totalLotteryCount,
+          lastLoginAt: req.user.lastLoginAt
+        }
+      }
+    })
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: error.message || '获取用户信息失败'
+    })
+  }
+})
+
+// 更新用户信息
+router.put('/profile', [
+  auth,
+  body('nickname').optional().isLength({ min: 2, max: 20 }).withMessage('昵称长度应在2-20个字符之间')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        code: 400,
+        message: errors.array()[0].msg
+      })
+    }
+
+    const { nickname, avatar } = req.body
+    const updateData = {}
+
+    if (nickname) updateData.nickname = nickname
+    if (avatar) updateData.avatar = avatar
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      updateData,
+      { new: true, runValidators: true }
+    )
+
+    res.json({
+      code: 200,
+      message: '更新成功',
+      data: {
+        user: {
+          id: user._id,
+          phone: user.phone,
+          nickname: user.nickname,
+          avatar: user.avatar,
+          points: user.points,
+          level: user.level
+        }
+      }
+    })
+  } catch (error) {
+    console.error('更新用户信息失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: error.message || '更新用户信息失败'
+    })
+  }
+})
+
+// 获取用户答题记录
+router.get('/quiz-history', auth, async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query
+    const skip = (page - 1) * limit
+
+    // 这里应该从QuizRecord模型获取数据，暂时返回模拟数据
+    const history = []
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: {
+        history,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: 0,
+          pages: 0
+        }
+      }
+    })
+  } catch (error) {
+    console.error('获取答题记录失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: error.message || '获取答题记录失败'
+    })
+  }
+})
+
+// 获取用户积分记录
+router.get('/points-history', auth, async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query
+    const skip = (page - 1) * limit
+
+    // 这里应该从PointsRecord模型获取数据，暂时返回模拟数据
+    const history = []
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: {
+        history,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: 0,
+          pages: 0
+        }
+      }
+    })
+  } catch (error) {
+    console.error('获取积分记录失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: error.message || '获取积分记录失败'
+    })
+  }
+})
+
+module.exports = router
