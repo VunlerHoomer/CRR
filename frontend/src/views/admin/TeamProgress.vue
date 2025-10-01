@@ -140,7 +140,7 @@ const fetchTeamProgress = async () => {
       limit: pageSize.value
     }
 
-    const response = await adminStore.request.get('/tasks/teams/progress', { params })
+    const response = await adminStore.request.get('/dashboard/teams', { params })
     if (response.code === 200) {
       teams.value = response.data.teams
       total.value = response.data.pagination.total

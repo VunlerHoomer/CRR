@@ -305,7 +305,7 @@ const fetchTasks = async () => {
       ...filterForm
     }
 
-    const response = await adminStore.request.get('/tasks/list', { params })
+    const response = await adminStore.request.get('/dashboard/tasks', { params })
     if (response.code === 200) {
       tasks.value = response.data.tasks
       total.value = response.data.pagination.total
