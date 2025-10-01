@@ -68,10 +68,14 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL,
     'http://localhost:3000',
+    'https://cityrunride-slkf60gl.edgeone.run',
     /\.edgeone\.app$/,
+    /\.edgeone\.run$/,
     /\.vercel\.app$/
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
