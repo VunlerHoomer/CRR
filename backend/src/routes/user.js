@@ -1,9 +1,11 @@
 const express = require('express')
+const multer = require('multer')
 const { body, validationResult } = require('express-validator')
 const User = require('../models/User')
 const auth = require('../middleware/auth')
 
 const router = express.Router()
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } })
 
 // 获取用户信息
 router.get('/profile', auth, async (req, res) => {
@@ -162,6 +164,33 @@ router.get('/points-history', auth, async (req, res) => {
       code: 500,
       message: error.message || '获取积分记录失败'
     })
+  }
+})
+
+// 上传头像（base64 存储到 avatar 字段）
+router.post('/avatar', auth, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ code: 400, message: '未收到文件' })
+    }
+    // 仅允许 jpg/png
+    const mime = req.file.mimetype
+    if (!['image/jpeg', 'image/png'].includes(mime)) {
+      return res.status(400).json({ code: 400, message: '仅支持 JPG/PNG' })
+    }
+    const base64 = `data:${mime};base64,${req.file.buffer.toString('base64')}`
+    const user = await User.findByIdAndUpdate(req.user._id, { avatar: base64 }, { new: true })
+    res.json({ code: 200, message: '上传成功', data: { url: user.avatar, user: {
+      id: user._id,
+      phone: user.phone,
+      nickname: user.nickname,
+      avatar: user.avatar,
+      school: user.school,
+      gender: user.gender
+    } } })
+  } catch (error) {
+    console.error('上传头像失败:', error)
+    res.status(500).json({ code: 500, message: error.message || '上传失败' })
   }
 })
 

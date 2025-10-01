@@ -145,9 +145,8 @@
         <el-form-item label="头像">
           <el-upload
             class="avatar-uploader"
-            action="#"
+            :http-request="uploadAvatar"
             :show-file-list="false"
-            :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload"
           >
             <img v-if="editForm.avatar" :src="editForm.avatar" class="avatar" />
@@ -254,8 +253,25 @@ const pointsHistory = ref([
   }
 ])
 
-const handleAvatarSuccess = (response, file) => {
-  editForm.avatar = URL.createObjectURL(file.raw)
+const uploadAvatar = async (options) => {
+  const { file, onSuccess, onError } = options
+  try {
+    const form = new FormData()
+    form.append('file', file)
+    const { default: request } = await import('@/api/request')
+    const resp = await request.post('/user/avatar', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    if (resp.code === 200) {
+      editForm.avatar = resp.data.url
+      userStore.updateUser(resp.data.user)
+      ElMessage.success('头像上传成功')
+      onSuccess && onSuccess(resp)
+    } else {
+      throw new Error(resp.message || '上传失败')
+    }
+  } catch (err) {
+    ElMessage.error(err.message || '上传失败')
+    onError && onError(err)
+  }
 }
 
 const beforeAvatarUpload = (file) => {
