@@ -31,6 +31,10 @@
       >
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="nickname" label="昵称" width="150" />
+        <el-table-column prop="school" label="学校" width="180" />
+        <el-table-column prop="gender" label="性别" width="100">
+          <template #default="{ row }">{{ genderText(row.gender) }}</template>
+        </el-table-column>
         <el-table-column prop="points" label="积分" width="100" sortable />
         <el-table-column prop="level" label="等级" width="80" sortable />
         <el-table-column prop="totalQuizCount" label="答题数" width="100" />
@@ -137,6 +141,19 @@
         <el-form-item label="昵称">
           <el-input v-model="editForm.nickname" />
         </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="editForm.phone" />
+        </el-form-item>
+        <el-form-item label="学校">
+          <el-input v-model="editForm.school" />
+        </el-form-item>
+        <el-form-item label="性别">
+          <el-select v-model="editForm.gender" style="width:100%">
+            <el-option label="男" value="male" />
+            <el-option label="女" value="female" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="积分">
           <el-input-number v-model="editForm.points" :min="0" />
         </el-form-item>
@@ -182,6 +199,9 @@ const editFormRef = ref()
 const editForm = reactive({
   _id: '',
   nickname: '',
+  phone: '',
+  school: '',
+  gender: '',
   points: 0,
   level: 1,
   isActive: true
@@ -225,6 +245,9 @@ const editUser = (user) => {
   Object.assign(editForm, {
     _id: user._id,
     nickname: user.nickname,
+    phone: user.phone,
+    school: user.school,
+    gender: user.gender,
     points: user.points,
     level: user.level,
     isActive: user.isActive
@@ -235,7 +258,8 @@ const editUser = (user) => {
 const submitEdit = async () => {
   try {
     submitting.value = true
-    const response = await adminStore.request.put(`/users/${editForm._id}`, editForm)
+    const payload = { ...editForm }
+    const response = await adminStore.request.put(`/users/${editForm._id}`, payload)
     
     if (response.data.code === 200) {
       ElMessage.success('用户信息更新成功')
@@ -274,6 +298,13 @@ const deleteUser = (user) => {
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleString('zh-CN')
+}
+
+const genderText = (g) => {
+  if (g === 'male') return '男'
+  if (g === 'female') return '女'
+  if (g === 'other') return '其他'
+  return ''
 }
 
 onMounted(() => {

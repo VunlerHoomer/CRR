@@ -22,6 +22,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // 就读学校
+  school: {
+    type: String,
+    default: ''
+  },
+  // 性别：male/female/other
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other', ''],
+    default: ''
+  },
   points: {
     type: Number,
     default: 0

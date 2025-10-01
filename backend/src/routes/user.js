@@ -17,6 +17,8 @@ router.get('/profile', auth, async (req, res) => {
           phone: req.user.phone,
           nickname: req.user.nickname,
           avatar: req.user.avatar,
+          school: req.user.school,
+          gender: req.user.gender,
           points: req.user.points,
           level: req.user.level,
           totalQuizCount: req.user.totalQuizCount,
@@ -39,7 +41,10 @@ router.get('/profile', auth, async (req, res) => {
 // 更新用户信息
 router.put('/profile', [
   auth,
-  body('nickname').optional().isLength({ min: 2, max: 20 }).withMessage('昵称长度应在2-20个字符之间')
+  body('nickname').optional().isLength({ min: 2, max: 20 }).withMessage('昵称长度应在2-20个字符之间'),
+  body('phone').optional().matches(/^1[3-9]\d{9}$/).withMessage('请输入正确的手机号'),
+  body('school').optional().isLength({ max: 100 }).withMessage('学校名称过长'),
+  body('gender').optional().isIn(['male', 'female', 'other', '']).withMessage('性别不合法')
 ], async (req, res) => {
   try {
     const errors = validationResult(req)
@@ -50,11 +55,22 @@ router.put('/profile', [
       })
     }
 
-    const { nickname, avatar } = req.body
+    const { nickname, avatar, phone, school, gender } = req.body
     const updateData = {}
 
     if (nickname) updateData.nickname = nickname
     if (avatar) updateData.avatar = avatar
+    if (school !== undefined) updateData.school = school
+    if (gender !== undefined) updateData.gender = gender
+
+    // 修改手机号需要校验唯一性
+    if (phone && phone !== req.user.phone) {
+      const exists = await User.findOne({ phone })
+      if (exists) {
+        return res.status(400).json({ code: 400, message: '该手机号已被占用' })
+      }
+      updateData.phone = phone
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
@@ -71,6 +87,8 @@ router.put('/profile', [
           phone: user.phone,
           nickname: user.nickname,
           avatar: user.avatar,
+          school: user.school,
+          gender: user.gender,
           points: user.points,
           level: user.level
         }

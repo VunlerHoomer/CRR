@@ -113,12 +113,21 @@ router.put('/:id', async (req, res) => {
     }
 
     // 允许更新的字段
-    const allowedFields = ['nickname', 'avatar', 'points', 'level', 'isActive']
+    const allowedFields = ['nickname', 'avatar', 'points', 'level', 'isActive', 'phone', 'school', 'gender']
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
         user[field] = req.body[field]
       }
     })
+
+    // 如果修改了手机号，需要校验唯一
+    if (req.body.phone && req.body.phone !== user.phone) {
+      const exists = await User.findOne({ phone: req.body.phone })
+      if (exists && exists._id.toString() !== user._id.toString()) {
+        return res.status(400).json({ code: 400, message: '该手机号已被占用' })
+      }
+      user.phone = req.body.phone
+    }
 
     await user.save()
 

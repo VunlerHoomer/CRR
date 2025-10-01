@@ -9,6 +9,8 @@
           <div class="user-details">
             <h2>{{ user?.nickname || '用户' }}</h2>
             <p>{{ user?.phone || '未绑定手机号' }}</p>
+            <p v-if="user?.school">学校：{{ user.school }}</p>
+            <p v-if="user?.gender">性别：{{ genderText(user.gender) }}</p>
             <div class="user-stats">
               <el-tag type="success">等级 {{ user?.level || 1 }}</el-tag>
               <el-tag type="warning">{{ user?.points || 0 }} 积分</el-tag>
@@ -127,6 +129,19 @@
         <el-form-item label="昵称">
           <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
         </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="editForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="学校">
+          <el-input v-model="editForm.school" placeholder="请输入就读学校" />
+        </el-form-item>
+        <el-form-item label="性别">
+          <el-select v-model="editForm.gender" placeholder="请选择性别" style="width:100%">
+            <el-option label="男" value="male" />
+            <el-option label="女" value="female" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="头像">
           <el-upload
             class="avatar-uploader"
@@ -159,7 +174,10 @@ const userStore = useUserStore()
 const editProfile = ref(false)
 const editForm = reactive({
   nickname: '',
-  avatar: ''
+  avatar: '',
+  phone: '',
+  school: '',
+  gender: ''
 })
 
 const user = computed(() => userStore.user)
@@ -255,7 +273,10 @@ const beforeAvatarUpload = (file) => {
 
 const saveProfile = async () => {
   try {
-    await userStore.updateUser(editForm)
+    const res = await (await import('@/api/user')).updateUserInfo(editForm)
+    if (res.code === 200) {
+      userStore.updateUser(res.data.user)
+    }
     ElMessage.success('资料更新成功')
     editProfile.value = false
   } catch (error) {
@@ -268,8 +289,18 @@ onMounted(() => {
     userStore.fetchUserInfo()
     editForm.nickname = user.value?.nickname || ''
     editForm.avatar = user.value?.avatar || ''
+    editForm.phone = user.value?.phone || ''
+    editForm.school = user.value?.school || ''
+    editForm.gender = user.value?.gender || ''
   }
 })
+
+const genderText = (g) => {
+  if (g === 'male') return '男'
+  if (g === 'female') return '女'
+  if (g === 'other') return '其他'
+  return ''
+}
 </script>
 
 <style scoped>
