@@ -21,43 +21,43 @@ const app = express()
 // 全局 Mongoose 配置（避免命令缓冲）
 mongoose.set('bufferCommands', false)
 
-// 数据库连接（使用连接池）
+// 数据库连接（确保真正连接成功后再返回）
 const connectDB = async () => {
-  // 如果已经连接，直接返回
-  if (mongoose.connection.readyState === 1) {
-    console.log('✅ 使用现有数据库连接')
-    return
-  }
+  const isConnected = () => mongoose.connection.readyState === 1
 
-  // 如果正在连接，等待连接完成
-  if (mongoose.connection.readyState === 2) {
-    console.log('⏳ 等待数据库连接...')
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    return
-  }
+  if (isConnected()) return
 
   try {
-    console.log('🔄 开始连接 MongoDB Atlas...')
-    console.log('MONGODB_URI:', process.env.MONGODB_URI ? '已配置' : '未配置')
-    
     if (!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI 环境变量未配置')
     }
 
-    await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 30000,  // 增加到 30 秒
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 30000,          // 添加连接超时
-      maxPoolSize: 10,
-      minPoolSize: 1
-    })
+    // 如果未连接或正在断开/断开，发起连接（正在连接的场景下，Mongoose 会复用同一个连接 Promise）
+    if (mongoose.connection.readyState !== 2) {
+      console.log('🔄 连接 MongoDB Atlas...')
+      await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 30000,
+        maxPoolSize: 10,
+        minPoolSize: 1
+      })
+    }
 
-    console.log('✅ MongoDB 连接成功')
-    console.log('✅ 数据库名:', mongoose.connection.name)
-    console.log('✅ 连接状态:', mongoose.connection.readyState)
+    // 统一等待直到 readyState === 1 或超时
+    const start = Date.now()
+    const timeoutMs = 30000
+    while (!isConnected()) {
+      if (Date.now() - start > timeoutMs) {
+        throw new Error('等待 MongoDB 连接超时')
+      }
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
+    if (isConnected()) {
+      console.log('✅ MongoDB 已连接')
+    }
   } catch (error) {
     console.error('❌ MongoDB 连接失败:', error.message)
-    console.error('❌ 错误详情:', error)
     throw error
   }
 }
