@@ -176,7 +176,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Trophy, Medal, Award, Refresh } from '@element-plus/icons-vue'
+import { Trophy, Medal, Star, Refresh } from '@element-plus/icons-vue'
 
 const activeTab = ref('points')
 

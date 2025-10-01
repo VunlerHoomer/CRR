@@ -152,7 +152,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
-import { Trophy, Star, Fire, Target, Plus } from '@element-plus/icons-vue'
+import { Trophy, Star, TrophyBase, Aim, Plus } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 
