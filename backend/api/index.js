@@ -18,6 +18,9 @@ const errorHandler = require('../src/middleware/errorHandler')
 // 创建 Express 应用
 const app = express()
 
+// 全局 Mongoose 配置（避免命令缓冲）
+mongoose.set('bufferCommands', false)
+
 // 数据库连接（使用连接池）
 const connectDB = async () => {
   // 如果已经连接，直接返回
@@ -46,9 +49,7 @@ const connectDB = async () => {
       socketTimeoutMS: 45000,
       connectTimeoutMS: 30000,          // 添加连接超时
       maxPoolSize: 10,
-      minPoolSize: 1,
-      bufferMaxEntries: 0,              // 禁用缓冲
-      bufferCommands: false,            // 禁用命令缓冲
+      minPoolSize: 1
     })
 
     console.log('✅ MongoDB 连接成功')
