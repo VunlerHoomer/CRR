@@ -52,6 +52,32 @@
           </div>
         </div>
       </el-card>
+
+      <el-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon task-icon">
+            <el-icon :size="32"><List /></el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">任务总数</div>
+            <div class="stat-value">{{ stats.tasks?.total || 0 }}</div>
+            <div class="stat-desc">完成率: {{ stats.tasks?.completionRate || 0 }}%</div>
+          </div>
+        </div>
+      </el-card>
+
+      <el-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon team-icon">
+            <el-icon :size="32"><Trophy /></el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">队伍数量</div>
+            <div class="stat-value">{{ stats.teams?.total || 0 }}</div>
+            <div class="stat-desc">平均积分: {{ stats.teams?.avgPoints || 0 }}</div>
+          </div>
+        </div>
+      </el-card>
     </div>
 
     <el-row :gutter="20" style="margin-top: 20px">
@@ -72,6 +98,14 @@
             <el-button type="warning" @click="$router.push('/admin/users')">
               <el-icon><User /></el-icon>
               <span>管理用户</span>
+            </el-button>
+            <el-button type="info" @click="$router.push('/admin/tasks')">
+              <el-icon><List /></el-icon>
+              <span>任务管理</span>
+            </el-button>
+            <el-button type="success" @click="$router.push('/admin/team-progress')">
+              <el-icon><Trophy /></el-icon>
+              <span>队伍进度</span>
             </el-button>
             <el-button @click="refreshData">
               <el-icon><Refresh /></el-icon>
@@ -153,6 +187,16 @@ onMounted(() => {
 .user-icon {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+}
+
+.task-icon {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+}
+
+.team-icon {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #333;
 }
 
 .quiz-icon {
