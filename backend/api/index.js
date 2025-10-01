@@ -154,6 +154,7 @@ app.use('/api/admin/dashboard', require('../src/routes/admin/dashboard'))
 app.use('/api/admin/quiz', require('../src/routes/admin/quiz'))
 app.use('/api/admin/lottery', require('../src/routes/admin/lottery'))
 app.use('/api/admin/users', require('../src/routes/admin/users'))
+app.use('/api/admin/tasks', require('../src/routes/admin/tasks'))
 
 // 健康检查
 app.get('/api/health', async (req, res) => {

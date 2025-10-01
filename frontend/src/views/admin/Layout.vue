@@ -25,6 +25,14 @@
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
+        <el-menu-item index="/admin/tasks">
+          <el-icon><List /></el-icon>
+          <span>任务管理</span>
+        </el-menu-item>
+        <el-menu-item index="/admin/team-progress">
+          <el-icon><Trophy /></el-icon>
+          <span>队伍进度</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 

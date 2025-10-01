@@ -88,6 +88,18 @@ const routes = [
         name: 'AdminUsers',
         component: () => import('@/views/admin/Users.vue'),
         meta: { title: '用户管理', requiresAdmin: true }
+      },
+      {
+        path: 'tasks',
+        name: 'AdminTasks',
+        component: () => import('@/views/admin/Tasks.vue'),
+        meta: { title: '任务管理', requiresAdmin: true }
+      },
+      {
+        path: 'team-progress',
+        name: 'AdminTeamProgress',
+        component: () => import('@/views/admin/TeamProgress.vue'),
+        meta: { title: '队伍进度', requiresAdmin: true }
       }
     ]
   }
