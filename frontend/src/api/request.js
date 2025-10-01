@@ -4,7 +4,7 @@ import { useUserStore } from '@/store/user'
 
 // 创建axios实例
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://crr-five.vercel.app/api',
   timeout: 10000
 })
 
