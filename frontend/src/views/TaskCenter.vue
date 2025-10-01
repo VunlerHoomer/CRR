@@ -209,7 +209,12 @@ const userStore = useUserStore()
 const activeTab = ref('progress')
 const loading = ref(false)
 const tasks = ref([])
-const teamInfo = ref(null)
+const teamInfo = ref({
+  name: '测试队伍',
+  description: '这是一个测试队伍',
+  totalPoints: 35,
+  completedTasks: 1
+})
 const areas = ref([])
 const onlyCurrentArea = ref(false)
 const selectedArea = ref('')
