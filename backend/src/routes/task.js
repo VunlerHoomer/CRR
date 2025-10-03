@@ -85,4 +85,55 @@ router.get('/list', async (req, res) => {
   }
 })
 
+// 获取任务详情
+router.get('/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id
+    
+    // 模拟任务详情
+    const task = {
+      _id: taskId,
+      taskId: taskId,
+      name: `任务-${taskId}`,
+      description: '这是一个示例任务描述',
+      area: '静安雕塑公园',
+      type: 'quiz',
+      difficulty: 'easy',
+      points: 20,
+      maxAttempts: 3,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z'
+    }
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: { task }
+    })
+  } catch (error) {
+    console.error('获取任务详情失败:', error)
+    res.status(500).json({ code: 500, message: '获取任务详情失败' })
+  }
+})
+
+// 获取区域列表
+router.get('/areas/list', async (req, res) => {
+  try {
+    const areas = [
+      { _id: '1', name: '静安雕塑公园' },
+      { _id: '2', name: '人民广场' },
+      { _id: '3', name: '外滩' }
+    ]
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: { areas }
+    })
+  } catch (error) {
+    console.error('获取区域列表失败:', error)
+    res.status(500).json({ code: 500, message: '获取区域列表失败' })
+  }
+})
+
 module.exports = router
