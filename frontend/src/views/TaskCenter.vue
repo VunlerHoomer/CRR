@@ -316,19 +316,14 @@ const fetchTasks = async () => {
     
     const taskResponse = await getTaskList(taskParams)
     
-    if (taskResponse.data.code === 200) {
-      tasks.value = taskResponse.data.data.tasks
-    } else {
-      ElMessage.error(taskResponse.data.message || '获取任务列表失败')
-      tasks.value = []
-    }
+    // 由于request拦截器的处理，成功时直接返回data对象
+    tasks.value = taskResponse.data.tasks
     
     // 获取区域列表
     try {
       const areaResponse = await getAreaList()
-      if (areaResponse.data.code === 200) {
-        areas.value = areaResponse.data.data.areas
-      }
+      // 由于request拦截器的处理，成功时直接返回data对象
+      areas.value = areaResponse.data.areas
     } catch (error) {
       console.warn('获取区域列表失败:', error)
       // 使用默认区域
