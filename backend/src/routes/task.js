@@ -85,7 +85,27 @@ router.get('/list', async (req, res) => {
   }
 })
 
-// 获取任务详情
+// 获取区域列表（必须在/:id之前定义）
+router.get('/areas/list', async (req, res) => {
+  try {
+    const areas = [
+      { _id: '1', name: '静安雕塑公园' },
+      { _id: '2', name: '人民广场' },
+      { _id: '3', name: '外滩' }
+    ]
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: { areas }
+    })
+  } catch (error) {
+    console.error('获取区域列表失败:', error)
+    res.status(500).json({ code: 500, message: '获取区域列表失败' })
+  }
+})
+
+// 获取任务详情（必须在最后定义，避免与其他路由冲突）
 router.get('/:id', async (req, res) => {
   try {
     const taskId = req.params.id
@@ -113,26 +133,6 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('获取任务详情失败:', error)
     res.status(500).json({ code: 500, message: '获取任务详情失败' })
-  }
-})
-
-// 获取区域列表
-router.get('/areas/list', async (req, res) => {
-  try {
-    const areas = [
-      { _id: '1', name: '静安雕塑公园' },
-      { _id: '2', name: '人民广场' },
-      { _id: '3', name: '外滩' }
-    ]
-
-    res.json({
-      code: 200,
-      message: '获取成功',
-      data: { areas }
-    })
-  } catch (error) {
-    console.error('获取区域列表失败:', error)
-    res.status(500).json({ code: 500, message: '获取区域列表失败' })
   }
 })
 
