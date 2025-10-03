@@ -200,9 +200,9 @@
             <el-select v-model="taskForm.area" placeholder="选择区域" style="flex: 1;">
               <el-option 
                 v-for="area in areaOptions" 
-                :key="area.name" 
-                :label="area.name" 
-                :value="area.name" 
+                :key="area" 
+                :label="area" 
+                :value="area" 
               />
             </el-select>
             <el-button type="primary" size="small" @click="showAreaDialog = true">
@@ -264,7 +264,7 @@
         
         <div class="area-list" style="margin-top: 20px;">
           <h4>现有区域</h4>
-          <el-table :data="areaOptions" style="width: 100%">
+          <el-table :data="areaOptions.map(name => ({ name }))" style="width: 100%">
             <el-table-column prop="name" label="区域名称" />
             <el-table-column label="操作" width="100">
               <template #default="{ row, $index }">
@@ -302,9 +302,9 @@ const isEdit = ref(false)
 
 // 区域管理
 const areaOptions = ref([
-  { name: '静安雕塑公园' },
-  { name: '人民广场' },
-  { name: '外滩' }
+  '静安雕塑公园',
+  '人民广场', 
+  '外滩'
 ])
 const newAreaName = ref('')
 
@@ -408,6 +408,28 @@ const submitTask = async () => {
   if (!taskFormRef.value) return
   
   try {
+    // 手动验证必填字段
+    if (!taskForm.name?.trim()) {
+      ElMessage.error('请输入任务名称')
+      return
+    }
+    if (!taskForm.description?.trim()) {
+      ElMessage.error('请输入任务描述')
+      return
+    }
+    if (!taskForm.area?.trim()) {
+      ElMessage.error('请选择区域')
+      return
+    }
+    if (!taskForm.type) {
+      ElMessage.error('请选择任务类型')
+      return
+    }
+    if (!taskForm.points || taskForm.points <= 0) {
+      ElMessage.error('请输入有效的积分')
+      return
+    }
+    
     // 表单验证
     await taskFormRef.value.validate()
     submitting.value = true
@@ -433,7 +455,15 @@ const submitTask = async () => {
     }
   } catch (error) {
     console.error('提交任务失败:', error)
-    ElMessage.error(error.response?.data?.message || error.message || '操作失败')
+    if (error.name === 'ValidationError') {
+      ElMessage.error('请检查表单填写是否正确')
+    } else if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message)
+    } else if (error.message) {
+      ElMessage.error(error.message)
+    } else {
+      ElMessage.error('操作失败，请稍后重试')
+    }
   } finally {
     submitting.value = false
   }
@@ -548,12 +578,12 @@ const addArea = () => {
   }
   
   // 检查是否已存在
-  if (areaOptions.value.some(area => area.name === name)) {
+  if (areaOptions.value.includes(name)) {
     ElMessage.warning('该区域已存在')
     return
   }
   
-  areaOptions.value.push({ name })
+  areaOptions.value.push(name)
   newAreaName.value = ''
   ElMessage.success('区域添加成功')
 }
@@ -565,7 +595,7 @@ const deleteArea = (index) => {
   }
   
   ElMessageBox.confirm(
-    `确定要删除区域 "${areaOptions.value[index].name}" 吗？`,
+    `确定要删除区域 "${areaOptions.value[index]}" 吗？`,
     '警告',
     {
       confirmButtonText: '确定删除',
