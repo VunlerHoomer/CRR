@@ -196,11 +196,20 @@
           />
         </el-form-item>
         <el-form-item label="区域" prop="area">
-          <el-select v-model="taskForm.area" placeholder="选择区域">
-            <el-option label="静安雕塑公园" value="静安雕塑公园" />
-            <el-option label="人民广场" value="人民广场" />
-            <el-option label="外滩" value="外滩" />
-          </el-select>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <el-select v-model="taskForm.area" placeholder="选择区域" style="flex: 1;">
+              <el-option 
+                v-for="area in areaOptions" 
+                :key="area.name" 
+                :label="area.name" 
+                :value="area.name" 
+              />
+            </el-select>
+            <el-button type="primary" size="small" @click="showAreaDialog = true">
+              <el-icon><Plus /></el-icon>
+              管理区域
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item label="任务类型" prop="type">
           <el-select v-model="taskForm.type" placeholder="选择任务类型">
@@ -235,6 +244,44 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 区域管理对话框 -->
+    <el-dialog v-model="showAreaDialog" title="区域管理" width="500px">
+      <div class="area-management">
+        <div class="add-area-section">
+          <el-input
+            v-model="newAreaName"
+            placeholder="输入新区域名称"
+            @keyup.enter="addArea"
+          >
+            <template #append>
+              <el-button type="primary" @click="addArea" :disabled="!newAreaName.trim()">
+                添加
+              </el-button>
+            </template>
+          </el-input>
+        </div>
+        
+        <div class="area-list" style="margin-top: 20px;">
+          <h4>现有区域</h4>
+          <el-table :data="areaOptions" style="width: 100%">
+            <el-table-column prop="name" label="区域名称" />
+            <el-table-column label="操作" width="100">
+              <template #default="{ row, $index }">
+                <el-button 
+                  type="danger" 
+                  size="small" 
+                  @click="deleteArea($index)"
+                  :disabled="areaOptions.length <= 1"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -250,7 +297,16 @@ const loading = ref(false)
 const submitting = ref(false)
 const detailDialogVisible = ref(false)
 const showCreateDialog = ref(false)
+const showAreaDialog = ref(false)
 const isEdit = ref(false)
+
+// 区域管理
+const areaOptions = ref([
+  { name: '静安雕塑公园' },
+  { name: '人民广场' },
+  { name: '外滩' }
+])
+const newAreaName = ref('')
 
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -352,22 +408,32 @@ const submitTask = async () => {
   if (!taskFormRef.value) return
   
   try {
+    // 表单验证
     await taskFormRef.value.validate()
     submitting.value = true
 
     const url = isEdit.value ? `/dashboard/tasks/${taskForm._id}` : '/dashboard/tasks'
     const method = isEdit.value ? 'put' : 'post'
     
+    console.log('提交任务数据:', taskForm)
+    console.log('API URL:', url)
+    console.log('请求方法:', method)
+    
     const response = await adminStore.request[method](url, taskForm)
+    
+    console.log('API响应:', response)
     
     if (response.code === 200) {
       ElMessage.success(isEdit.value ? '任务更新成功' : '任务创建成功')
       showCreateDialog.value = false
       resetForm()
       fetchTasks()
+    } else {
+      ElMessage.error(response.message || '操作失败')
     }
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || '操作失败')
+    console.error('提交任务失败:', error)
+    ElMessage.error(error.response?.data?.message || error.message || '操作失败')
   } finally {
     submitting.value = false
   }
@@ -471,6 +537,45 @@ const getDifficultyTagType = (difficulty) => {
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleString('zh-CN')
+}
+
+// 区域管理方法
+const addArea = () => {
+  const name = newAreaName.value.trim()
+  if (!name) {
+    ElMessage.warning('请输入区域名称')
+    return
+  }
+  
+  // 检查是否已存在
+  if (areaOptions.value.some(area => area.name === name)) {
+    ElMessage.warning('该区域已存在')
+    return
+  }
+  
+  areaOptions.value.push({ name })
+  newAreaName.value = ''
+  ElMessage.success('区域添加成功')
+}
+
+const deleteArea = (index) => {
+  if (areaOptions.value.length <= 1) {
+    ElMessage.warning('至少需要保留一个区域')
+    return
+  }
+  
+  ElMessageBox.confirm(
+    `确定要删除区域 "${areaOptions.value[index].name}" 吗？`,
+    '警告',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(() => {
+    areaOptions.value.splice(index, 1)
+    ElMessage.success('区域删除成功')
+  }).catch(() => {})
 }
 
 onMounted(() => {
