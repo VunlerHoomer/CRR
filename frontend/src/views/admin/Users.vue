@@ -217,7 +217,7 @@ const fetchUsers = async () => {
     }
     if (searchKeyword.value) params.keyword = searchKeyword.value
 
-    const response = await adminStore.request.get('/users/list', { params })
+    const response = await adminStore.request.get('/admin/users/list', { params })
     if (response.data.code === 200) {
       users.value = response.data.data.users
       total.value = response.data.data.pagination.total
@@ -231,7 +231,7 @@ const fetchUsers = async () => {
 
 const viewUserDetail = async (user) => {
   try {
-    const response = await adminStore.request.get(`/users/${user._id}`)
+    const response = await adminStore.request.get(`/admin/users/${user._id}`)
     if (response.data.code === 200) {
       currentUser.value = response.data.data
       detailDialogVisible.value = true
@@ -259,7 +259,7 @@ const submitEdit = async () => {
   try {
     submitting.value = true
     const payload = { ...editForm }
-    const response = await adminStore.request.put(`/users/${editForm._id}`, payload)
+    const response = await adminStore.request.put(`/admin/users/${editForm._id}`, payload)
     
     if (response.data.code === 200) {
       ElMessage.success('用户信息更新成功')
@@ -284,7 +284,7 @@ const deleteUser = (user) => {
     }
   ).then(async () => {
     try {
-      const response = await adminStore.request.delete(`/users/${user._id}`)
+      const response = await adminStore.request.delete(`/admin/users/${user._id}`)
       if (response.data.code === 200) {
         ElMessage.success('删除成功')
         fetchUsers()

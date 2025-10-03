@@ -223,7 +223,7 @@ const fetchQuizzes = async () => {
     if (filterCategory.value) params.category = filterCategory.value
     if (filterDifficulty.value) params.difficulty = filterDifficulty.value
 
-    const response = await adminStore.request.get('/quiz/list', { params })
+    const response = await adminStore.request.get('/admin/quiz/list', { params })
     if (response.data.code === 200) {
       quizzes.value = response.data.data.quizzes
       total.value = response.data.data.pagination.total
@@ -288,7 +288,7 @@ const deleteQuiz = (quiz) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const response = await adminStore.request.delete(`/quiz/${quiz._id}`)
+      const response = await adminStore.request.delete(`/admin/quiz/${quiz._id}`)
       if (response.data.code === 200) {
         ElMessage.success('删除成功')
         fetchQuizzes()

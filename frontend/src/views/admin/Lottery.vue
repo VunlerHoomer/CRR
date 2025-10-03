@@ -204,7 +204,7 @@ const fetchLotteries = async () => {
       limit: pageSize.value
     }
 
-    const response = await adminStore.request.get('/lottery/list', { params })
+    const response = await adminStore.request.get('/admin/lottery/list', { params })
     if (response.data.code === 200) {
       lotteries.value = response.data.data.lotteries
       total.value = response.data.data.pagination.total
@@ -274,7 +274,7 @@ const deleteLottery = (lottery) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const response = await adminStore.request.delete(`/lottery/${lottery._id}`)
+      const response = await adminStore.request.delete(`/admin/lottery/${lottery._id}`)
       if (response.data.code === 200) {
         ElMessage.success('删除成功')
         fetchLotteries()
@@ -287,7 +287,7 @@ const deleteLottery = (lottery) => {
 
 const viewStats = async (lottery) => {
   try {
-    const response = await adminStore.request.get(`/lottery/${lottery._id}/stats`)
+    const response = await adminStore.request.get(`/admin/lottery/${lottery._id}/stats`)
     if (response.data.code === 200) {
       currentStats.value = response.data.data
       statsDialogVisible.value = true

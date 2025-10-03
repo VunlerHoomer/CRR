@@ -129,7 +129,7 @@ const stats = ref({})
 
 const fetchStats = async () => {
   try {
-    const response = await adminStore.request.get('/dashboard/overview')
+    const response = await adminStore.request.get('/admin/dashboard/overview')
     console.log('仪表盘响应:', response)
     if (response.data.code === 200) {
       stats.value = response.data.data
