@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 
 const adminRequest = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL || 'https://crr-five.vercel.app/api') + '/admin',
+  baseURL: (import.meta.env.VITE_API_BASE_URL || 'https://crr-five.vercel.app/api'),
   timeout: 30000  // 增加到 30 秒
 })
 

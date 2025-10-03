@@ -197,7 +197,13 @@
         </el-form-item>
         <el-form-item label="区域" prop="area">
           <div style="display: flex; gap: 10px; align-items: center;">
-            <el-select v-model="taskForm.area" placeholder="选择区域" style="flex: 1;">
+            <el-select 
+              v-model="taskForm.area" 
+              placeholder="选择区域" 
+              style="flex: 1;"
+              @change="onAreaChange"
+              clearable
+            >
               <el-option 
                 v-for="area in areaOptions" 
                 :key="area" 
@@ -209,6 +215,10 @@
               <el-icon><Plus /></el-icon>
               管理区域
             </el-button>
+          </div>
+          <!-- 调试信息 -->
+          <div style="font-size: 12px; color: #999; margin-top: 5px;">
+            当前选中: {{ taskForm.area || '未选择' }}
           </div>
         </el-form-item>
         <el-form-item label="任务类型" prop="type">
@@ -361,7 +371,7 @@ const fetchTasks = async () => {
       ...filterForm
     }
 
-    const response = await adminStore.request.get('/dashboard/tasks', { params })
+    const response = await adminStore.request.get('/admin/dashboard/tasks', { params })
     if (response.code === 200) {
       tasks.value = response.data.tasks
       total.value = response.data.pagination.total
@@ -376,7 +386,7 @@ const fetchTasks = async () => {
 // 查看任务详情
 const viewTaskDetail = async (task) => {
   try {
-    const response = await adminStore.request.get(`/dashboard/tasks/${task._id}`)
+    const response = await adminStore.request.get(`/admin/dashboard/tasks/${task._id}`)
     if (response.code === 200) {
       currentTask.value = response.data.task
       detailDialogVisible.value = true
@@ -434,16 +444,19 @@ const submitTask = async () => {
     await taskFormRef.value.validate()
     submitting.value = true
 
-    const url = isEdit.value ? `/dashboard/tasks/${taskForm._id}` : '/dashboard/tasks'
+    const url = isEdit.value ? `/admin/dashboard/tasks/${taskForm._id}` : '/admin/dashboard/tasks'
     const method = isEdit.value ? 'put' : 'post'
     
     console.log('提交任务数据:', taskForm)
     console.log('API URL:', url)
     console.log('请求方法:', method)
+    console.log('完整的表单数据:', JSON.stringify(taskForm, null, 2))
     
     const response = await adminStore.request[method](url, taskForm)
     
     console.log('API响应:', response)
+    console.log('响应状态码:', response.status)
+    console.log('响应数据:', response.data)
     
     if (response.code === 200) {
       ElMessage.success(isEdit.value ? '任务更新成功' : '任务创建成功')
@@ -473,7 +486,7 @@ const submitTask = async () => {
 const toggleTaskStatus = async (task) => {
   try {
     const newStatus = !task.isActive
-    const response = await adminStore.request.put(`/dashboard/tasks/${task._id}`, {
+    const response = await adminStore.request.put(`/admin/dashboard/tasks/${task._id}`, {
       isActive: newStatus
     })
     
@@ -498,7 +511,7 @@ const deleteTask = (task) => {
     }
   ).then(async () => {
     try {
-      const response = await adminStore.request.delete(`/dashboard/tasks/${task._id}`)
+      const response = await adminStore.request.delete(`/admin/dashboard/tasks/${task._id}`)
       if (response.code === 200) {
         ElMessage.success('删除成功')
         fetchTasks()
@@ -567,6 +580,12 @@ const getDifficultyTagType = (difficulty) => {
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleString('zh-CN')
+}
+
+// 区域选择变化处理
+const onAreaChange = (value) => {
+  console.log('区域选择变化:', value)
+  console.log('当前表单数据:', taskForm)
 }
 
 // 区域管理方法
