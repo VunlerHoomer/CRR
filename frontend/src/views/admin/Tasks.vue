@@ -372,9 +372,9 @@ const fetchTasks = async () => {
     }
 
     const response = await adminStore.request.get('/admin/dashboard/tasks', { params })
-    if (response.code === 200) {
-      tasks.value = response.data.tasks
-      total.value = response.data.pagination.total
+    if (response.data.code === 200) {
+      tasks.value = response.data.data.tasks
+      total.value = response.data.data.pagination.total
     }
   } catch (error) {
     ElMessage.error('获取任务列表失败')
@@ -387,8 +387,8 @@ const fetchTasks = async () => {
 const viewTaskDetail = async (task) => {
   try {
     const response = await adminStore.request.get(`/admin/dashboard/tasks/${task._id}`)
-    if (response.code === 200) {
-      currentTask.value = response.data.task
+    if (response.data.code === 200) {
+      currentTask.value = response.data.data.task
       detailDialogVisible.value = true
     }
   } catch (error) {
@@ -458,13 +458,13 @@ const submitTask = async () => {
     console.log('响应状态码:', response.status)
     console.log('响应数据:', response.data)
     
-    if (response.code === 200) {
+    if (response.data.code === 200) {
       ElMessage.success(isEdit.value ? '任务更新成功' : '任务创建成功')
       showCreateDialog.value = false
       resetForm()
       fetchTasks()
     } else {
-      ElMessage.error(response.message || '操作失败')
+      ElMessage.error(response.data.message || '操作失败')
     }
   } catch (error) {
     console.error('提交任务失败:', error)
@@ -490,7 +490,7 @@ const toggleTaskStatus = async (task) => {
       isActive: newStatus
     })
     
-    if (response.code === 200) {
+    if (response.data.code === 200) {
       task.isActive = newStatus
       ElMessage.success(newStatus ? '任务已启用' : '任务已禁用')
     }
@@ -512,7 +512,7 @@ const deleteTask = (task) => {
   ).then(async () => {
     try {
       const response = await adminStore.request.delete(`/admin/dashboard/tasks/${task._id}`)
-      if (response.code === 200) {
+      if (response.data.code === 200) {
         ElMessage.success('删除成功')
         fetchTasks()
       }

@@ -141,9 +141,9 @@ const fetchTeamProgress = async () => {
     }
 
     const response = await adminStore.request.get('/admin/dashboard/teams', { params })
-    if (response.code === 200) {
-      teams.value = response.data.teams
-      total.value = response.data.pagination.total
+    if (response.data.code === 200) {
+      teams.value = response.data.data.teams
+      total.value = response.data.data.pagination.total
       
       // 计算概览统计
       calculateOverviewStats()
