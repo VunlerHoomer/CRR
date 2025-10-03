@@ -148,6 +148,9 @@ app.use('/api/quiz', quizRoutes)
 app.use('/api/lottery', lotteryRoutes)
 app.use('/api/ranking', rankingRoutes)
 
+// 用户端任务路由（测试版本）
+app.use('/api/task', require('../src/routes/task'))
+
 // 管理员路由
 app.use('/api/admin/auth', require('../src/routes/admin/auth'))
 app.use('/api/admin/dashboard', require('../src/routes/admin/dashboard'))
