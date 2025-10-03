@@ -202,6 +202,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getTaskList, getAreaList } from '@/api/task'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -300,21 +301,55 @@ const mockAreas = [
 const fetchTasks = async () => {
   loading.value = true
   try {
-    // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    let filteredTasks = [...mockTasks]
-    
-    if (selectedArea.value) {
-      const areaName = mockAreas.find(a => a._id === selectedArea.value)?.name
-      filteredTasks = filteredTasks.filter(task => task.area.name === areaName)
+    // 获取任务列表
+    const taskParams = {
+      page: 1,
+      limit: 100
     }
     
-    tasks.value = filteredTasks
-    teamInfo.value = mockTeamInfo
-    areas.value = mockAreas
+    if (selectedArea.value) {
+      const areaName = areas.value.find(a => a._id === selectedArea.value)?.name
+      if (areaName) {
+        taskParams.area = areaName
+      }
+    }
+    
+    const taskResponse = await getTaskList(taskParams)
+    
+    if (taskResponse.data.code === 200) {
+      tasks.value = taskResponse.data.data.tasks
+    } else {
+      ElMessage.error(taskResponse.data.message || '获取任务列表失败')
+      tasks.value = []
+    }
+    
+    // 获取区域列表
+    try {
+      const areaResponse = await getAreaList()
+      if (areaResponse.data.code === 200) {
+        areas.value = areaResponse.data.data.areas
+      }
+    } catch (error) {
+      console.warn('获取区域列表失败:', error)
+      // 使用默认区域
+      areas.value = [
+        { _id: '1', name: '静安雕塑公园' },
+        { _id: '2', name: '人民广场' },
+        { _id: '3', name: '外滩' }
+      ]
+    }
+    
+    // 使用默认队伍信息
+    teamInfo.value = {
+      name: '默认队伍',
+      description: '暂无队伍信息',
+      totalPoints: 0,
+      completedTasks: 0
+    }
   } catch (error) {
-    ElMessage.error('获取任务列表失败')
+    console.error('获取数据失败:', error)
+    ElMessage.error('获取数据失败，请稍后重试')
+    tasks.value = []
   } finally {
     loading.value = false
   }
