@@ -47,7 +47,7 @@ export const useAdminStore = defineStore('admin', () => {
   const login = async (username, password) => {
     loading.value = true
     try {
-      const response = await adminRequest.post('/auth/login', { username, password })
+      const response = await adminRequest.post('/admin/auth/login', { username, password })
       const data = response.data
       
       if (data.code === 200) {
@@ -69,7 +69,7 @@ export const useAdminStore = defineStore('admin', () => {
   const fetchAdminInfo = async () => {
     if (!token.value) return
     try {
-      const response = await adminRequest.get('/auth/profile')
+      const response = await adminRequest.get('/admin/auth/profile')
       const data = response.data
       
       if (data.code === 200) {
