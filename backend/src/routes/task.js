@@ -1,10 +1,9 @@
 const express = require('express')
-const { auth } = require('../middleware/auth')
 
 const router = express.Router()
 
-// 获取任务列表（用户端）
-router.get('/list', auth, async (req, res) => {
+// 获取任务列表（用户端）- 暂时移除认证
+router.get('/list', async (req, res) => {
   try {
     const { page = 1, limit = 20, area = '', type = '' } = req.query
     
