@@ -243,6 +243,136 @@ router.get('/tasks', async (req, res) => {
   }
 })
 
+// 创建任务（简化版）
+router.post('/tasks', async (req, res) => {
+  try {
+    const { name, description, area, type, points, difficulty, maxAttempts } = req.body
+
+    // 简单的验证
+    if (!name || !description || !area || !type || !points) {
+      return res.status(400).json({
+        code: 400,
+        message: '请填写所有必填字段'
+      })
+    }
+
+    // 模拟创建任务
+    const newTask = {
+      _id: Date.now().toString(),
+      taskId: Date.now().toString(),
+      name,
+      description,
+      area,
+      type,
+      difficulty: difficulty || 'easy',
+      points: parseInt(points),
+      maxAttempts: parseInt(maxAttempts) || 3,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      totalAttempts: 0,
+      completedCount: 0,
+      completionRate: 0
+    }
+
+    res.json({
+      code: 200,
+      message: '任务创建成功',
+      data: { task: newTask }
+    })
+  } catch (error) {
+    console.error('创建任务失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '创建任务失败'
+    })
+  }
+})
+
+// 更新任务（简化版）
+router.put('/tasks/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id
+    const updateData = req.body
+
+    // 模拟更新任务
+    const updatedTask = {
+      _id: taskId,
+      ...updateData,
+      updatedAt: new Date().toISOString()
+    }
+
+    res.json({
+      code: 200,
+      message: '任务更新成功',
+      data: { task: updatedTask }
+    })
+  } catch (error) {
+    console.error('更新任务失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '更新任务失败'
+    })
+  }
+})
+
+// 删除任务（简化版）
+router.delete('/tasks/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id
+
+    // 模拟删除任务
+    res.json({
+      code: 200,
+      message: '任务删除成功'
+    })
+  } catch (error) {
+    console.error('删除任务失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '删除任务失败'
+    })
+  }
+})
+
+// 获取任务详情（简化版）
+router.get('/tasks/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id
+    
+    // 模拟任务详情
+    const task = {
+      _id: taskId,
+      taskId: '1',
+      name: '1-1',
+      description: '在静安雕塑公园完成基础地理知识答题',
+      area: '静安雕塑公园',
+      type: 'quiz',
+      difficulty: 'easy',
+      points: 20,
+      maxAttempts: 3,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      totalAttempts: 15,
+      completedCount: 12,
+      completionRate: 80,
+      totalPoints: 240
+    }
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: { task }
+    })
+  } catch (error) {
+    console.error('获取任务详情失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '获取任务详情失败'
+    })
+  }
+})
+
 // 获取队伍进度（简化版）
 router.get('/teams', async (req, res) => {
   try {

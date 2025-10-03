@@ -320,7 +320,7 @@ const fetchTasks = async () => {
 // 查看任务详情
 const viewTaskDetail = async (task) => {
   try {
-    const response = await adminStore.request.get(`/tasks/${task._id}`)
+    const response = await adminStore.request.get(`/dashboard/tasks/${task._id}`)
     if (response.code === 200) {
       currentTask.value = response.data.task
       detailDialogVisible.value = true
@@ -355,7 +355,7 @@ const submitTask = async () => {
     await taskFormRef.value.validate()
     submitting.value = true
 
-    const url = isEdit.value ? `/tasks/${taskForm._id}` : '/tasks/create'
+    const url = isEdit.value ? `/dashboard/tasks/${taskForm._id}` : '/dashboard/tasks'
     const method = isEdit.value ? 'put' : 'post'
     
     const response = await adminStore.request[method](url, taskForm)
@@ -377,7 +377,7 @@ const submitTask = async () => {
 const toggleTaskStatus = async (task) => {
   try {
     const newStatus = !task.isActive
-    const response = await adminStore.request.put(`/tasks/${task._id}`, {
+    const response = await adminStore.request.put(`/dashboard/tasks/${task._id}`, {
       isActive: newStatus
     })
     
@@ -402,7 +402,7 @@ const deleteTask = (task) => {
     }
   ).then(async () => {
     try {
-      const response = await adminStore.request.delete(`/tasks/${task._id}`)
+      const response = await adminStore.request.delete(`/dashboard/tasks/${task._id}`)
       if (response.code === 200) {
         ElMessage.success('删除成功')
         fetchTasks()
