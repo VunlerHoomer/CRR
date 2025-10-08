@@ -74,6 +74,11 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  // 任务管理权限
+  canAccessTaskManagement: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

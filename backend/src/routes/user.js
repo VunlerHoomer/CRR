@@ -27,7 +27,8 @@ router.get('/profile', auth, async (req, res) => {
           correctQuizCount: req.user.correctQuizCount,
           accuracy: req.user.accuracy,
           totalLotteryCount: req.user.totalLotteryCount,
-          lastLoginAt: req.user.lastLoginAt
+          lastLoginAt: req.user.lastLoginAt,
+          canAccessTaskManagement: req.user.canAccessTaskManagement
         }
       }
     })

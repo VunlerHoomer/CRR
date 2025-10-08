@@ -113,7 +113,7 @@ router.put('/:id', async (req, res) => {
     }
 
     // 允许更新的字段
-    const allowedFields = ['nickname', 'avatar', 'points', 'level', 'isActive', 'phone', 'school', 'gender']
+    const allowedFields = ['nickname', 'avatar', 'points', 'level', 'isActive', 'phone', 'school', 'gender', 'canAccessTaskManagement']
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
         user[field] = req.body[field]

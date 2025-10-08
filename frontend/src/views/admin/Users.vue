@@ -37,6 +37,13 @@
         </el-table-column>
         <el-table-column prop="points" label="积分" width="100" sortable />
         <el-table-column prop="level" label="等级" width="80" sortable />
+        <el-table-column prop="canAccessTaskManagement" label="任务权限" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.canAccessTaskManagement ? 'success' : 'info'" size="small">
+              {{ row.canAccessTaskManagement ? '允许' : '禁止' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="totalQuizCount" label="答题数" width="100" />
         <el-table-column prop="correctQuizCount" label="正确数" width="100" />
         <el-table-column prop="accuracy" label="正确率" width="100">
@@ -90,6 +97,13 @@
           <el-descriptions-item label="答对数">{{ currentUser.user?.correctQuizCount }}</el-descriptions-item>
           <el-descriptions-item label="正确率">{{ currentUser.user?.accuracy }}%</el-descriptions-item>
           <el-descriptions-item label="抽签总数">{{ currentUser.user?.totalLotteryCount }}</el-descriptions-item>
+          <el-descriptions-item label="学校">{{ currentUser.user?.school }}</el-descriptions-item>
+          <el-descriptions-item label="性别">{{ genderText(currentUser.user?.gender) }}</el-descriptions-item>
+          <el-descriptions-item label="任务管理权限">
+            <el-tag :type="currentUser.user?.canAccessTaskManagement ? 'success' : 'info'" size="small">
+              {{ currentUser.user?.canAccessTaskManagement ? '允许' : '禁止' }}
+            </el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="注册时间" :span="2">
             {{ formatDate(currentUser.user?.createdAt) }}
           </el-descriptions-item>
@@ -160,6 +174,13 @@
         <el-form-item label="等级">
           <el-input-number v-model="editForm.level" :min="1" :max="10" />
         </el-form-item>
+        <el-form-item label="任务管理权限">
+          <el-switch 
+            v-model="editForm.canAccessTaskManagement"
+            active-text="允许"
+            inactive-text="禁止"
+          />
+        </el-form-item>
         <el-form-item label="状态">
           <el-switch v-model="editForm.isActive" active-text="正常" inactive-text="禁用" />
         </el-form-item>
@@ -204,7 +225,8 @@ const editForm = reactive({
   gender: '',
   points: 0,
   level: 1,
-  isActive: true
+  isActive: true,
+  canAccessTaskManagement: false
 })
 
 // 获取用户列表
@@ -250,7 +272,8 @@ const editUser = (user) => {
     gender: user.gender,
     points: user.points,
     level: user.level,
-    isActive: user.isActive
+    isActive: user.isActive,
+    canAccessTaskManagement: user.canAccessTaskManagement || false
   })
   editDialogVisible.value = true
 }
