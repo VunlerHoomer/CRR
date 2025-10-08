@@ -4,15 +4,15 @@ const bcrypt = require('bcryptjs')
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
+    required: [true, '用户名不能为空'],
     unique: true,
-    sparse: true,  // 允许多个空值
     minlength: [3, '用户名至少3个字符'],
     maxlength: [20, '用户名不能超过20个字符']
   },
   phone: {
     type: String,
+    required: [true, '手机号不能为空'],
     unique: true,
-    sparse: true,  // 允许多个空值
     match: [/^1[3-9]\d{9}$/, '请输入正确的手机号']
   },
   email: {

@@ -17,9 +17,18 @@
           <el-form-item prop="username">
             <el-input
               v-model="registerForm.username"
-              placeholder="请输入用户名 (可选)"
+              placeholder="请输入用户名"
               size="large"
               :prefix-icon="User"
+            />
+          </el-form-item>
+
+          <el-form-item prop="phone">
+            <el-input
+              v-model="registerForm.phone"
+              placeholder="请输入手机号"
+              size="large"
+              :prefix-icon="Phone"
             />
           </el-form-item>
 
@@ -51,24 +60,6 @@
               placeholder="请输入邮箱 (可选)"
               size="large"
               :prefix-icon="Message"
-            />
-          </el-form-item>
-
-          <el-form-item prop="nickname">
-            <el-input
-              v-model="registerForm.nickname"
-              placeholder="请输入昵称 (可选)"
-              size="large"
-              :prefix-icon="User"
-            />
-          </el-form-item>
-
-          <el-form-item prop="phone">
-            <el-input
-              v-model="registerForm.phone"
-              placeholder="请输入手机号 (可选)"
-              size="large"
-              :prefix-icon="Phone"
             />
           </el-form-item>
 
@@ -148,14 +139,18 @@ const registerForm = reactive({
   password: '',
   confirmPassword: '',
   email: '',
-  nickname: '',
   phone: '',
   consent: false
 })
 
 const registerRules = {
   username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度应在3-20个字符之间', trigger: 'blur' }
+  ],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -176,12 +171,6 @@ const registerRules = {
   ],
   email: [
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
-  ],
-  nickname: [
-    { max: 20, message: '昵称长度不能超过20个字符', trigger: 'blur' }
-  ],
-  phone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ]
 }
 
@@ -201,15 +190,10 @@ const handleRegister = async () => {
     
     // 构建注册数据
     const registerData = {
+      username: registerForm.username,
+      phone: registerForm.phone,
       password: registerForm.password,
-      email: registerForm.email || undefined,
-      nickname: registerForm.nickname || undefined,
-      phone: registerForm.phone || undefined
-    }
-    
-    // 可选字段
-    if (registerForm.username) {
-      registerData.username = registerForm.username
+      email: registerForm.email || undefined
     }
     
     await userStore.registerUser(registerData)

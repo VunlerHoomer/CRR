@@ -188,11 +188,10 @@ router.post('/login', [
 
 // 注册
 router.post('/register', [
-  body('username').optional().isLength({ min: 3, max: 20 }).withMessage('用户名长度应在3-20个字符之间'),
+  body('username').isLength({ min: 3, max: 20 }).withMessage('用户名长度应在3-20个字符之间'),
+  body('phone').matches(/^1[3-9]\d{9}$/).withMessage('请输入正确的手机号'),
   body('password').isLength({ min: 6 }).withMessage('密码至少6位'),
-  body('email').optional().isEmail().withMessage('请输入正确的邮箱格式'),
-  body('nickname').optional().isLength({ min: 2, max: 20 }).withMessage('昵称长度应在2-20个字符之间'),
-  body('phone').optional().matches(/^1[3-9]\d{9}$/).withMessage('请输入正确的手机号')
+  body('email').optional().isEmail().withMessage('请输入正确的邮箱格式')
 ], async (req, res) => {
   try {
     const errors = validationResult(req)
@@ -203,28 +202,24 @@ router.post('/register', [
       })
     }
 
-    const { username, password, email, nickname, phone } = req.body
+    const { username, password, email, phone } = req.body
 
-    // 检查用户名是否已存在（如果提供了用户名）
-    if (username) {
-      const existingUserByUsername = await User.findOne({ username })
-      if (existingUserByUsername) {
-        return res.status(400).json({
-          code: 400,
-          message: '用户名已存在'
-        })
-      }
+    // 检查用户名是否已存在
+    const existingUserByUsername = await User.findOne({ username })
+    if (existingUserByUsername) {
+      return res.status(400).json({
+        code: 400,
+        message: '用户名已存在'
+      })
     }
 
-    // 检查手机号是否已注册（如果提供了手机号）
-    if (phone) {
-      const existingUserByPhone = await User.findOne({ phone })
-      if (existingUserByPhone) {
-        return res.status(400).json({
-          code: 400,
-          message: '手机号已注册'
-        })
-      }
+    // 检查手机号是否已注册
+    const existingUserByPhone = await User.findOne({ phone })
+    if (existingUserByPhone) {
+      return res.status(400).json({
+        code: 400,
+        message: '手机号已注册'
+      })
     }
 
     // 检查邮箱是否已注册（如果提供了邮箱）
@@ -240,14 +235,14 @@ router.post('/register', [
 
     // 创建用户
     const userData = {
+      username,
+      phone,
       password,
-      nickname: nickname || username || `用户${Date.now().toString().slice(-4)}`
+      nickname: username
     }
     
     // 可选字段
-    if (username) userData.username = username
     if (email) userData.email = email
-    if (phone) userData.phone = phone
     
     const user = new User(userData)
     await user.save()
