@@ -162,7 +162,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, InfoFilled, User, ArrowLeft } from '@element-plus/icons-vue'
 import { getActivityList } from '@/api/activity'
-import { getMyTeam, generateInvitationCode, joinTeamByCode, leaveTeam } from '@/api/team'
+import { getMyTeam, generateInvitationCode as generateInvitationCodeAPI, joinTeamByCode, leaveTeam as leaveTeamAPI } from '@/api/team'
 
 const router = useRouter()
 
@@ -200,7 +200,7 @@ const generateInvitationCode = async () => {
 
   generating.value = true
   try {
-    const response = await generateInvitationCode()
+    const response = await generateInvitationCodeAPI()
     invitationCode.value = response.data.invitationCode
     ElMessage.success('邀请码生成成功')
   } catch (error) {
@@ -243,7 +243,7 @@ const leaveTeam = async () => {
       type: 'warning'
     })
     
-    await leaveTeam()
+    await leaveTeamAPI()
     ElMessage.success('已退出队伍')
     
     // 清空队伍信息
