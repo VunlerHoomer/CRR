@@ -105,16 +105,24 @@ router.post('/login', [
       }
 
       // 查找用户（支持用户名、手机号、邮箱登录）
-      if (username) {
-        user = await User.findOne({ username }).select('+password')
-      } else if (phone) {
-        user = await User.findOne({ phone }).select('+password')
-      } else if (email) {
-        user = await User.findOne({ email }).select('+password')
-      } else {
-        return res.status(400).json({
-          code: 400,
-          message: '请输入用户名、手机号或邮箱'
+      try {
+        if (username) {
+          user = await User.findOne({ username }).select('+password')
+        } else if (phone) {
+          user = await User.findOne({ phone }).select('+password')
+        } else if (email) {
+          user = await User.findOne({ email }).select('+password')
+        } else {
+          return res.status(400).json({
+            code: 400,
+            message: '请输入用户名、手机号或邮箱'
+          })
+        }
+      } catch (dbError) {
+        console.error('数据库查询错误:', dbError)
+        return res.status(500).json({
+          code: 500,
+          message: '数据库查询失败'
         })
       }
       
