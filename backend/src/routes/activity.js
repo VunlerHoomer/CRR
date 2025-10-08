@@ -6,38 +6,21 @@ const User = require('../models/User')
 const { body, validationResult } = require('express-validator')
 const auth = require('../middleware/auth')
 
-// 临时调试路由
-router.get('/debug', async (req, res) => {
-  try {
-    const allActivities = await Activity.find({})
-    console.log('数据库中的所有活动:', allActivities.map(a => ({ title: a.title, startTime: a.startTime, isActive: a.isActive })))
-    
-    res.json({
-      code: 200,
-      message: '调试信息',
-      data: {
-        totalActivities: allActivities.length,
-        activities: allActivities.map(a => ({
-          title: a.title,
-          startTime: a.startTime,
-          isActive: a.isActive,
-          status: a.status
-        }))
-      }
-    })
-  } catch (error) {
-    console.error('调试失败:', error)
-    res.status(500).json({
-      code: 500,
-      message: '调试失败'
-    })
-  }
-})
 
 // 获取活动列表
 router.get('/list', async (req, res) => {
   try {
     const { type, page = 1, limit = 10 } = req.query
+    
+    // 调试：检查所有活动
+    const allActivities = await Activity.find({})
+    console.log('数据库中的所有活动数量:', allActivities.length)
+    console.log('活动详情:', allActivities.map(a => ({ 
+      title: a.title, 
+      startTime: a.startTime, 
+      isActive: a.isActive,
+      status: a.status 
+    })))
     
     let query = { isActive: true }
     
@@ -45,9 +28,11 @@ router.get('/list', async (req, res) => {
     if (type === 'new') {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       query.startTime = { $gte: thirtyDaysAgo }
+      console.log('新活动查询条件:', query)
     } else if (type === 'old') {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       query.startTime = { $lt: thirtyDaysAgo }
+      console.log('旧活动查询条件:', query)
     }
     
     const skip = (page - 1) * limit
@@ -56,6 +41,8 @@ router.get('/list', async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .lean()
+    
+    console.log('查询结果数量:', activities.length)
     
     // 添加虚拟字段
     const activitiesWithVirtual = activities.map(activity => ({
