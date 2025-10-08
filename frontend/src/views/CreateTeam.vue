@@ -141,7 +141,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, CircleCheck, DocumentCopy } from '@element-plus/icons-vue'
 import { getActivityList } from '@/api/activity'
-import { createTeam, generateInvitationCode } from '@/api/team'
+import { createTeam as createTeamAPI, generateInvitationCode } from '@/api/team'
 
 const router = useRouter()
 
@@ -225,7 +225,7 @@ const createTeam = async () => {
       activity: createForm.value.activityId
     }
 
-    const response = await createTeam(teamData)
+    const response = await createTeamAPI(teamData)
     
     if (response.data.code === 200) {
       ElMessage.success('队伍创建成功！')
