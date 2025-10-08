@@ -44,13 +44,19 @@ const routes = [
     component: () => import('@/views/Profile.vue'),
     meta: { title: '个人中心', requiresAuth: true }
   },
-  // 任务中心路由
-  {
-    path: '/task-center',
-    name: 'TaskCenter',
-    component: () => import('@/views/TaskCenter.vue'),
-    meta: { title: '任务中心', requiresAuth: true }
-  },
+    // 活动中心路由
+    {
+      path: '/activity-center',
+      name: 'ActivityCenter',
+      component: () => import('@/views/ActivityCenter.vue'),
+      meta: { title: '活动中心', requiresAuth: true }
+    },
+    {
+      path: '/activity/:id',
+      name: 'ActivityDetail',
+      component: () => import('@/views/ActivityDetail.vue'),
+      meta: { title: '活动详情', requiresAuth: true }
+    },
   {
     path: '/task/quiz/:id',
     name: 'TaskQuiz',

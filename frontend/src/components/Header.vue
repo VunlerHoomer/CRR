@@ -16,7 +16,7 @@
           <el-menu-item index="/">首页</el-menu-item>
           <el-menu-item index="/quiz" v-if="isLoggedIn">答题</el-menu-item>
           <el-menu-item index="/lottery" v-if="isLoggedIn">抽签</el-menu-item>
-          <el-menu-item index="/task-center" v-if="isLoggedIn">任务中心</el-menu-item>
+          <el-menu-item index="/activity-center" v-if="isLoggedIn">活动中心</el-menu-item>
           <el-menu-item index="/ranking">排行榜</el-menu-item>
         </el-menu>
       </div>

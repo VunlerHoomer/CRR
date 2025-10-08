@@ -151,6 +151,12 @@ app.use('/api/ranking', rankingRoutes)
 // 用户端任务路由（测试版本）
 app.use('/api/task', require('../src/routes/task'))
 
+// 活动相关路由
+app.use('/api/activity', require('../src/routes/activity'))
+
+// 队伍相关路由
+app.use('/api/team', require('../src/routes/team'))
+
 // 管理员路由
 app.use('/api/admin/auth', require('../src/routes/admin/auth'))
 app.use('/api/admin/dashboard', require('../src/routes/admin/dashboard'))
