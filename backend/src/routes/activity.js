@@ -6,6 +6,34 @@ const User = require('../models/User')
 const { body, validationResult } = require('express-validator')
 const auth = require('../middleware/auth')
 
+// 临时调试路由
+router.get('/debug', async (req, res) => {
+  try {
+    const allActivities = await Activity.find({})
+    console.log('数据库中的所有活动:', allActivities.map(a => ({ title: a.title, startTime: a.startTime, isActive: a.isActive })))
+    
+    res.json({
+      code: 200,
+      message: '调试信息',
+      data: {
+        totalActivities: allActivities.length,
+        activities: allActivities.map(a => ({
+          title: a.title,
+          startTime: a.startTime,
+          isActive: a.isActive,
+          status: a.status
+        }))
+      }
+    })
+  } catch (error) {
+    console.error('调试失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '调试失败'
+    })
+  }
+})
+
 // 获取活动列表
 router.get('/list', async (req, res) => {
   try {
