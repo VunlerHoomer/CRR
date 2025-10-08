@@ -6,6 +6,48 @@ const User = require('../models/User')
 const { body, validationResult } = require('express-validator')
 const auth = require('../middleware/auth')
 
+// 删除指定活动
+router.delete('/cleanup', async (req, res) => {
+  try {
+    const activitiesToDelete = ['PolisSH120', 'POLISSOP IV', 'PilotSH']
+    
+    console.log('准备删除活动:', activitiesToDelete)
+    
+    const result = await Activity.deleteMany({
+      title: { $in: activitiesToDelete }
+    })
+    
+    console.log('删除结果:', result)
+    
+    // 获取剩余活动
+    const remainingActivities = await Activity.find({}).sort({ startTime: -1 })
+    console.log('剩余活动:')
+    remainingActivities.forEach(activity => {
+      console.log(`- ${activity.title} (${activity.status})`)
+    })
+    
+    res.json({
+      code: 200,
+      message: '活动删除成功',
+      data: {
+        deletedCount: result.deletedCount,
+        remainingCount: remainingActivities.length,
+        remainingActivities: remainingActivities.map(a => ({
+          title: a.title,
+          status: a.status,
+          startTime: a.startTime
+        }))
+      }
+    })
+  } catch (error) {
+    console.error('删除活动失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '删除活动失败'
+    })
+  }
+})
+
 // 初始化活动数据
 router.post('/init', async (req, res) => {
   try {
