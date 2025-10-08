@@ -13,10 +13,6 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>仪表盘</span>
         </el-menu-item>
-        <el-menu-item index="/admin/quiz">
-          <el-icon><Edit /></el-icon>
-          <span>题目管理</span>
-        </el-menu-item>
         <el-menu-item index="/admin/lottery">
           <el-icon><Present /></el-icon>
           <span>抽签管理</span>

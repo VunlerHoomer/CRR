@@ -21,12 +21,6 @@ const routes = [
     meta: { title: '注册', hideHeader: true }
   },
   {
-    path: '/quiz',
-    name: 'Quiz',
-    component: () => import('@/views/Quiz.vue'),
-    meta: { title: '答题', requiresAuth: true }
-  },
-  {
     path: '/lottery',
     name: 'Lottery',
     component: () => import('@/views/Lottery.vue'),
@@ -57,12 +51,6 @@ const routes = [
       component: () => import('@/views/ActivityDetail.vue'),
       meta: { title: '活动详情', requiresAuth: true }
     },
-  {
-    path: '/task/quiz/:id',
-    name: 'TaskQuiz',
-    component: () => import('@/views/TaskQuiz.vue'),
-    meta: { title: '答题任务', requiresAuth: true }
-  },
   // 管理员路由
   {
     path: '/admin',
@@ -76,12 +64,6 @@ const routes = [
         name: 'AdminDashboard',
         component: () => import('@/views/admin/Dashboard.vue'),
         meta: { title: '仪表盘', requiresAdmin: true }
-      },
-      {
-        path: 'quiz',
-        name: 'AdminQuiz',
-        component: () => import('@/views/admin/Quiz.vue'),
-        meta: { title: '题目管理', requiresAdmin: true }
       },
       {
         path: 'lottery',

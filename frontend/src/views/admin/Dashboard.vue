@@ -14,18 +14,6 @@
         </div>
       </el-card>
 
-      <el-card class="stat-card">
-        <div class="stat-content">
-          <div class="stat-icon quiz-icon">
-            <el-icon :size="32"><Edit /></el-icon>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">题目总数</div>
-            <div class="stat-value">{{ stats.quizzes?.total || 0 }}</div>
-            <div class="stat-desc">今日答题: {{ stats.quizzes?.todayRecords || 0 }}</div>
-          </div>
-        </div>
-      </el-card>
 
       <el-card class="stat-card">
         <div class="stat-content">
@@ -48,7 +36,7 @@
           <div class="stat-info">
             <div class="stat-label">活跃用户</div>
             <div class="stat-value">{{ stats.users?.active || 0 }}</div>
-            <div class="stat-desc">近7日答题: {{ stats.quizzes?.weeklyRecords || 0 }}</div>
+            <div class="stat-desc">近7日活跃: {{ stats.users?.weeklyActive || 0 }}</div>
           </div>
         </div>
       </el-card>
@@ -87,10 +75,6 @@
             <span>快捷操作</span>
           </template>
           <div class="quick-actions">
-            <el-button type="primary" @click="$router.push('/admin/quiz')">
-              <el-icon><Edit /></el-icon>
-              <span>管理题目</span>
-            </el-button>
             <el-button type="success" @click="$router.push('/admin/lottery')">
               <el-icon><Present /></el-icon>
               <span>管理抽签</span>
@@ -122,7 +106,7 @@
 import { ref, onMounted } from 'vue'
 import { useAdminStore } from '@/store/admin'
 import { ElMessage } from 'element-plus'
-import { User, Edit, Present, TrendCharts, Refresh } from '@element-plus/icons-vue'
+import { User, Present, TrendCharts, Refresh } from '@element-plus/icons-vue'
 
 const adminStore = useAdminStore()
 const stats = ref({})
@@ -199,10 +183,6 @@ onMounted(() => {
   color: #333;
 }
 
-.quiz-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-}
 
 .lottery-icon {
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);

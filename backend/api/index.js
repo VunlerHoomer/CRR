@@ -10,7 +10,6 @@ require('dotenv').config()
 // 导入路由
 const authRoutes = require('../src/routes/auth')
 const userRoutes = require('../src/routes/user')
-const quizRoutes = require('../src/routes/quiz')
 const lotteryRoutes = require('../src/routes/lottery')
 const rankingRoutes = require('../src/routes/ranking')
 const errorHandler = require('../src/middleware/errorHandler')
@@ -144,7 +143,6 @@ app.use('/api/', limiter)
 // 路由
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
-app.use('/api/quiz', quizRoutes)
 app.use('/api/lottery', lotteryRoutes)
 app.use('/api/ranking', rankingRoutes)
 
@@ -160,7 +158,6 @@ app.use('/api/team', require('../src/routes/team'))
 // 管理员路由
 app.use('/api/admin/auth', require('../src/routes/admin/auth'))
 app.use('/api/admin/dashboard', require('../src/routes/admin/dashboard'))
-app.use('/api/admin/quiz', require('../src/routes/admin/quiz'))
 app.use('/api/admin/lottery', require('../src/routes/admin/lottery'))
 app.use('/api/admin/users', require('../src/routes/admin/users'))
 // 临时注释掉任务管理路由，避免部署错误
