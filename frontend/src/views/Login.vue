@@ -42,13 +42,12 @@
         >
           <!-- 用户登录 -->
           <template v-if="accountType === 'user'">
-            <el-form-item prop="phone">
+            <el-form-item prop="username">
               <el-input
-                v-model="loginForm.phone"
-                placeholder="请输入手机号"
+                v-model="loginForm.username"
+                placeholder="请输入用户名、手机号或邮箱"
                 size="large"
-                :prefix-icon="Phone"
-                maxlength="11"
+                :prefix-icon="User"
               />
             </el-form-item>
             
@@ -91,9 +90,9 @@
 
           <!-- 管理员登录 -->
           <template v-else>
-            <el-form-item prop="username">
+            <el-form-item prop="adminUsername">
               <el-input
-                v-model="loginForm.username"
+                v-model="loginForm.adminUsername"
                 placeholder="请输入管理员用户名"
                 size="large"
                 :prefix-icon="User"
@@ -179,10 +178,10 @@ const accountType = ref('user') // 'user' 或 'admin'
 const loginType = ref('code') // 'code' 或 'password'（仅用户登录）
 
 const loginForm = reactive({
-  phone: '',
+  username: '',
   code: '',
   password: '',
-  username: '',
+  adminUsername: '',
   adminPassword: ''
 })
 
@@ -190,9 +189,8 @@ const loginRules = computed(() => {
   const rules = {}
   
   if (accountType.value === 'user') {
-    rules.phone = [
-      { required: true, message: '请输入手机号', trigger: 'blur' },
-      { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+    rules.username = [
+      { required: true, message: '请输入用户名、手机号或邮箱', trigger: 'blur' }
     ]
     
     if (loginType.value === 'code') {
@@ -208,12 +206,12 @@ const loginRules = computed(() => {
     }
   } else {
     // 管理员登录
-    rules.username = [
-      { required: true, message: '请输入用户名', trigger: 'blur' },
+    rules.adminUsername = [
+      { required: true, message: '请输入管理员用户名', trigger: 'blur' },
       { min: 3, message: '用户名至少3个字符', trigger: 'blur' }
     ]
     rules.adminPassword = [
-      { required: true, message: '请输入密码', trigger: 'blur' },
+      { required: true, message: '请输入管理员密码', trigger: 'blur' },
       { min: 6, message: '密码至少6位', trigger: 'blur' }
     ]
   }
@@ -223,18 +221,19 @@ const loginRules = computed(() => {
 
 // 发送验证码
 const sendCode = async () => {
-  if (!loginForm.phone) {
+  if (!loginForm.username) {
     ElMessage.warning('请先输入手机号')
     return
   }
   
-  if (!/^1[3-9]\d{9}$/.test(loginForm.phone)) {
-    ElMessage.warning('请输入正确的手机号')
+  // 检查是否是手机号格式
+  if (!/^1[3-9]\d{9}$/.test(loginForm.username)) {
+    ElMessage.warning('验证码登录需要输入手机号')
     return
   }
   
   try {
-    await sendSmsCode(loginForm.phone)
+    await sendSmsCode(loginForm.username)
     ElMessage.success('验证码已发送')
     startCountdown()
   } catch (error) {
@@ -256,10 +255,10 @@ const startCountdown = () => {
 // 切换账号类型
 const switchAccountType = () => {
   // 清空表单
-  loginForm.phone = ''
+  loginForm.username = ''
   loginForm.code = ''
   loginForm.password = ''
-  loginForm.username = ''
+  loginForm.adminUsername = ''
   loginForm.adminPassword = ''
   if (loginFormRef.value) {
     loginFormRef.value.clearValidate()
@@ -288,13 +287,29 @@ const handleLogin = async () => {
     if (accountType.value === 'user') {
       // 用户登录
       const loginData = {
-        phone: loginForm.phone,
         loginType: loginType.value
       }
       
       if (loginType.value === 'code') {
+        // 验证码登录需要手机号
+        if (!/^1[3-9]\d{9}$/.test(loginForm.username)) {
+          ElMessage.error('验证码登录需要输入手机号')
+          return
+        }
+        loginData.phone = loginForm.username
         loginData.code = loginForm.code
       } else {
+        // 密码登录支持用户名、手机号、邮箱
+        if (/^1[3-9]\d{9}$/.test(loginForm.username)) {
+          // 手机号登录
+          loginData.phone = loginForm.username
+        } else if (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(loginForm.username)) {
+          // 邮箱登录
+          loginData.email = loginForm.username
+        } else {
+          // 用户名登录
+          loginData.username = loginForm.username
+        }
         loginData.password = loginForm.password
       }
       
@@ -303,7 +318,7 @@ const handleLogin = async () => {
       router.push('/')
     } else {
       // 管理员登录
-      await adminStore.login(loginForm.username, loginForm.adminPassword)
+      await adminStore.login(loginForm.adminUsername, loginForm.adminPassword)
       ElMessage.success('管理员登录成功')
       router.push('/admin/dashboard')
     }

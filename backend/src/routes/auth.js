@@ -46,9 +46,8 @@ router.post('/send-sms', [
   }
 })
 
-// 登录（支持验证码和密码两种方式）
+// 登录（支持用户名/手机号/邮箱 + 密码登录）
 router.post('/login', [
-  body('phone').matches(/^1[3-9]\d{9}$/).withMessage('请输入正确的手机号'),
   body('loginType').isIn(['code', 'password']).withMessage('登录方式不正确')
 ], async (req, res) => {
   try {
@@ -60,36 +59,35 @@ router.post('/login', [
       })
     }
 
-    const { phone, loginType, code, password } = req.body
+    const { loginType, username, phone, email, code, password } = req.body
 
-    // 查找用户（如果是密码登录需要包含password字段）
-    const user = loginType === 'password' 
-      ? await User.findOne({ phone }).select('+password')
-      : await User.findOne({ phone })
-    
-    if (!user) {
-      return res.status(400).json({
-        code: 400,
-        message: '用户不存在'
-      })
-    }
+    let user = null
 
-    if (!user.isActive) {
-      return res.status(400).json({
-        code: 400,
-        message: '账户已被禁用'
-      })
-    }
-
-    // 验证码登录
+    // 验证码登录（保留向后兼容）
     if (loginType === 'code') {
+      if (!phone) {
+        return res.status(400).json({
+          code: 400,
+          message: '请输入手机号'
+        })
+      }
       if (!code) {
         return res.status(400).json({
           code: 400,
           message: '请输入验证码'
         })
       }
-      // 验证验证码（这里简化处理，实际应该验证短信验证码）
+      
+      user = await User.findOne({ phone })
+      
+      if (!user) {
+        return res.status(400).json({
+          code: 400,
+          message: '用户不存在'
+        })
+      }
+
+      // 验证验证码（这里简化处理）
       if (code !== '123456') {
         return res.status(400).json({
           code: 400,
@@ -105,12 +103,35 @@ router.post('/login', [
           message: '请输入密码'
         })
       }
+
+      // 查找用户（支持用户名、手机号、邮箱登录）
+      if (username) {
+        user = await User.findOne({ username }).select('+password')
+      } else if (phone) {
+        user = await User.findOne({ phone }).select('+password')
+      } else if (email) {
+        user = await User.findOne({ email }).select('+password')
+      } else {
+        return res.status(400).json({
+          code: 400,
+          message: '请输入用户名、手机号或邮箱'
+        })
+      }
+      
+      if (!user) {
+        return res.status(400).json({
+          code: 400,
+          message: '用户不存在'
+        })
+      }
+
       if (!user.password) {
         return res.status(400).json({
           code: 400,
-          message: '该账号未设置密码，请使用验证码登录'
+          message: '该账号未设置密码'
         })
       }
+
       // 验证密码
       const isPasswordValid = await user.comparePassword(password)
       if (!isPasswordValid) {
@@ -119,6 +140,13 @@ router.post('/login', [
           message: '密码错误'
         })
       }
+    }
+
+    if (!user.isActive) {
+      return res.status(400).json({
+        code: 400,
+        message: '账户已被禁用'
+      })
     }
 
     // 更新最后登录时间
@@ -139,7 +167,9 @@ router.post('/login', [
         token,
         user: {
           id: user._id,
+          username: user.username,
           phone: user.phone,
+          email: user.email,
           nickname: user.nickname,
           avatar: user.avatar,
           points: user.points,
@@ -158,10 +188,11 @@ router.post('/login', [
 
 // 注册
 router.post('/register', [
-  body('phone').matches(/^1[3-9]\d{9}$/).withMessage('请输入正确的手机号'),
-  body('code').isLength({ min: 6, max: 6 }).withMessage('验证码必须是6位数字'),
+  body('username').isLength({ min: 3, max: 20 }).withMessage('用户名长度应在3-20个字符之间'),
+  body('password').isLength({ min: 6 }).withMessage('密码至少6位'),
+  body('email').optional().isEmail().withMessage('请输入正确的邮箱格式'),
   body('nickname').optional().isLength({ min: 2, max: 20 }).withMessage('昵称长度应在2-20个字符之间'),
-  body('password').optional().isLength({ min: 6 }).withMessage('密码至少6位')
+  body('phone').optional().matches(/^1[3-9]\d{9}$/).withMessage('请输入正确的手机号')
 ], async (req, res) => {
   try {
     const errors = validationResult(req)
@@ -172,38 +203,51 @@ router.post('/register', [
       })
     }
 
-    const { phone, code, nickname, password } = req.body
+    const { username, password, email, nickname, phone } = req.body
 
-    // 验证验证码（简化处理，实际应该验证短信验证码）
-    if (code !== '123456') {
+    // 检查用户名是否已存在
+    const existingUserByUsername = await User.findOne({ username })
+    if (existingUserByUsername) {
       return res.status(400).json({
         code: 400,
-        message: '验证码错误'
+        message: '用户名已存在'
       })
     }
 
-    // 检查手机号是否已注册
-    const existingUser = await User.findOne({ phone })
-    if (existingUser) {
-      return res.status(400).json({
-        code: 400,
-        message: '手机号已注册'
-      })
+    // 检查手机号是否已注册（如果提供了手机号）
+    if (phone) {
+      const existingUserByPhone = await User.findOne({ phone })
+      if (existingUserByPhone) {
+        return res.status(400).json({
+          code: 400,
+          message: '手机号已注册'
+        })
+      }
+    }
+
+    // 检查邮箱是否已注册（如果提供了邮箱）
+    if (email) {
+      const existingUserByEmail = await User.findOne({ email })
+      if (existingUserByEmail) {
+        return res.status(400).json({
+          code: 400,
+          message: '邮箱已注册'
+        })
+      }
     }
 
     // 创建用户
     const userData = {
-      phone,
-      nickname: nickname || `用户${phone.slice(-4)}`
+      username,
+      password,
+      nickname: nickname || username
     }
     
-    // 如果提供了密码，则设置密码
-    if (password) {
-      userData.password = password
-    }
+    // 可选字段
+    if (email) userData.email = email
+    if (phone) userData.phone = phone
     
     const user = new User(userData)
-
     await user.save()
 
     // 生成JWT令牌
@@ -220,7 +264,9 @@ router.post('/register', [
         token,
         user: {
           id: user._id,
+          username: user.username,
           phone: user.phone,
+          email: user.email,
           nickname: user.nickname,
           avatar: user.avatar,
           points: user.points,

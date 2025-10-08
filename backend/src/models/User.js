@@ -2,20 +2,34 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 
 const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: [true, '用户名不能为空'],
+    unique: true,
+    minlength: [3, '用户名至少3个字符'],
+    maxlength: [20, '用户名不能超过20个字符']
+  },
   phone: {
     type: String,
-    required: [true, '手机号不能为空'],
     unique: true,
+    sparse: true,  // 允许多个空值
     match: [/^1[3-9]\d{9}$/, '请输入正确的手机号']
+  },
+  email: {
+    type: String,
+    unique: true,
+    sparse: true,  // 允许多个空值
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, '请输入正确的邮箱']
   },
   password: {
     type: String,
+    required: [true, '密码不能为空'],
     select: false  // 默认查询时不返回密码
   },
   nickname: {
     type: String,
     default: function() {
-      return `用户${this.phone.slice(-4)}`
+      return this.username || `用户${Date.now().toString().slice(-4)}`
     }
   },
   avatar: {
