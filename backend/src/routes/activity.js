@@ -6,47 +6,6 @@ const User = require('../models/User')
 const { body, validationResult } = require('express-validator')
 const auth = require('../middleware/auth')
 
-// 删除指定活动
-router.delete('/cleanup', async (req, res) => {
-  try {
-    const activitiesToDelete = ['PolisSH120', 'POLISSOP IV', 'PilotSH']
-    
-    console.log('准备删除活动:', activitiesToDelete)
-    
-    const result = await Activity.deleteMany({
-      title: { $in: activitiesToDelete }
-    })
-    
-    console.log('删除结果:', result)
-    
-    // 获取剩余活动
-    const remainingActivities = await Activity.find({}).sort({ startTime: -1 })
-    console.log('剩余活动:')
-    remainingActivities.forEach(activity => {
-      console.log(`- ${activity.title} (${activity.status})`)
-    })
-    
-    res.json({
-      code: 200,
-      message: '活动删除成功',
-      data: {
-        deletedCount: result.deletedCount,
-        remainingCount: remainingActivities.length,
-        remainingActivities: remainingActivities.map(a => ({
-          title: a.title,
-          status: a.status,
-          startTime: a.startTime
-        }))
-      }
-    })
-  } catch (error) {
-    console.error('删除活动失败:', error)
-    res.status(500).json({
-      code: 500,
-      message: '删除活动失败'
-    })
-  }
-})
 
 // 初始化活动数据
 router.post('/init', async (req, res) => {
@@ -55,7 +14,7 @@ router.post('/init', async (req, res) => {
     await Activity.deleteMany({})
     console.log('已清空现有活动数据')
 
-    // 创建新活动数据
+    // 创建新活动数据（只保留需要的活动）
     const activities = [
       {
         title: '溯槎问帙',
@@ -74,59 +33,6 @@ router.post('/init', async (req, res) => {
           { name: '探索大师', description: '神秘宝箱奖励', points: 800 },
           { name: '时空旅者', description: '纪念徽章', points: 600 },
           { name: '智慧探寻者', description: '探索证书', points: 400 }
-        ]
-      },
-      {
-        title: 'POLISSOP IV',
-        description: '探索城市奥秘，挑战智慧极限。这是一场充满挑战和乐趣的城市定向活动，考验你的观察力、判断力和团队协作能力。',
-        banner: '/images/activities/polissop-iv.jpg',
-        startTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7天后开始
-        endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 8 * 60 * 60 * 1000), // 8小时后结束
-        location: '上海市静安区',
-        maxParticipants: 200,
-        currentParticipants: 156,
-        difficulty: '中等',
-        status: 'upcoming',
-        registrationDeadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5天后截止报名
-        requirements: ['身体健康', '团队协作能力', '基本体能'],
-        rewards: [
-          { name: '一等奖', description: '现金奖励10000元', points: 1000 },
-          { name: '二等奖', description: '现金奖励5000元', points: 800 },
-          { name: '三等奖', description: '现金奖励2000元', points: 600 }
-        ]
-      },
-      {
-        title: 'PilotSH',
-        description: '成为传奇机长吧！体验飞行的魅力，挑战空中导航技能，在虚拟的蓝天中展现你的飞行天赋。',
-        banner: '/images/activities/pilot-sh.jpg',
-        startTime: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15天前开始
-        endTime: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000), // 6小时后结束
-        location: '上海市浦东新区',
-        maxParticipants: 150,
-        currentParticipants: 150,
-        difficulty: '困难',
-        status: 'completed',
-        registrationDeadline: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), // 20天前截止
-        requirements: ['基础飞行知识', '团队合作精神'],
-        rewards: [
-          { name: '飞行达人', description: '飞行模拟器使用权', points: 500 }
-        ]
-      },
-      {
-        title: 'PolisSH120',
-        description: '百廿寻踪，追溯历史足迹。在这场文化探索之旅中，你将深入了解这座城市的历史底蕴和文化传承。',
-        banner: '/images/activities/polissh120.jpg',
-        startTime: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000), // 45天前开始
-        endTime: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000 + 10 * 60 * 60 * 1000), // 10小时后结束
-        location: '上海市黄浦区',
-        maxParticipants: 100,
-        currentParticipants: 100,
-        difficulty: '中等',
-        status: 'completed',
-        registrationDeadline: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000), // 50天前截止
-        requirements: ['历史文化兴趣', '徒步能力'],
-        rewards: [
-          { name: '文化探索者', description: '历史文化书籍一套', points: 300 }
         ]
       },
       {
