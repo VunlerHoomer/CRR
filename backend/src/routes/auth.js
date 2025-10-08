@@ -196,7 +196,7 @@ router.post('/login', [
 
 // 注册
 router.post('/register', [
-  body('username').isLength({ min: 3, max: 20 }).withMessage('用户名长度应在3-20个字符之间'),
+  body('username').optional().isLength({ min: 3, max: 20 }).withMessage('用户名长度应在3-20个字符之间'),
   body('phone').matches(/^1[3-9]\d{9}$/).withMessage('请输入正确的手机号'),
   body('password').isLength({ min: 6 }).withMessage('密码至少6位'),
   body('email').optional().isEmail().withMessage('请输入正确的邮箱格式')
@@ -212,13 +212,15 @@ router.post('/register', [
 
     const { username, password, email, phone } = req.body
 
-    // 检查用户名是否已存在
-    const existingUserByUsername = await User.findOne({ username })
-    if (existingUserByUsername) {
-      return res.status(400).json({
-        code: 400,
-        message: '用户名已存在'
-      })
+    // 检查用户名是否已存在（如果提供了用户名）
+    if (username) {
+      const existingUserByUsername = await User.findOne({ username })
+      if (existingUserByUsername) {
+        return res.status(400).json({
+          code: 400,
+          message: '用户名已存在'
+        })
+      }
     }
 
     // 检查手机号是否已注册
@@ -243,13 +245,13 @@ router.post('/register', [
 
     // 创建用户
     const userData = {
-      username,
       phone,
       password,
-      nickname: username
+      nickname: username || `用户${phone.slice(-4)}`
     }
     
     // 可选字段
+    if (username) userData.username = username
     if (email) userData.email = email
     
     const user = new User(userData)
