@@ -106,7 +106,7 @@
       <div class="register-banner">
         <div class="banner-content">
           <div class="logo-container">
-            <img src="/images/crr-logo.svg" alt="CRR城市定向" class="crr-logo" />
+            <img src="/images/crr-logo.png" alt="CRR城市定向" class="crr-logo" />
           </div>
           <h3>CRR城市定向</h3>
           <p>探索城市，发现精彩</p>
