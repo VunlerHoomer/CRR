@@ -23,6 +23,25 @@ const initActivities = async () => {
     // 创建新活动数据
     const activities = [
       {
+        title: '溯槎问帙',
+        description: '溯槎问帙，探索未知的奇幻世界。在这场充满神秘色彩的冒险中，你将穿越时空的漩涡，寻找失落的宝藏，揭开古老的秘密。准备好迎接这场充满挑战的奇幻之旅吧！',
+        banner: '/images/activities/suchawenzhi.jpg',
+        startTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3天后开始
+        endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000), // 6小时后结束
+        location: '上海市徐汇区',
+        maxParticipants: 150,
+        currentParticipants: 0,
+        difficulty: '中等',
+        status: 'upcoming',
+        registrationDeadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2天后截止报名
+        requirements: ['探索精神', '团队协作能力', '观察力'],
+        rewards: [
+          { name: '探索大师', description: '神秘宝箱奖励', points: 800 },
+          { name: '时空旅者', description: '纪念徽章', points: 600 },
+          { name: '智慧探寻者', description: '探索证书', points: 400 }
+        ]
+      },
+      {
         title: 'POLISSOP IV',
         description: '探索城市奥秘，挑战智慧极限。这是一场充满挑战和乐趣的城市定向活动，考验你的观察力、判断力和团队协作能力。',
         banner: '/images/activities/polissop-iv.jpg',
