@@ -144,27 +144,15 @@ router.get('/list', async (req, res) => {
   try {
     const { type, page = 1, limit = 10 } = req.query
     
-    // 调试：检查所有活动
-    const allActivities = await Activity.find({})
-    console.log('数据库中的所有活动数量:', allActivities.length)
-    console.log('活动详情:', allActivities.map(a => ({ 
-      title: a.title, 
-      startTime: a.startTime, 
-      isActive: a.isActive,
-      status: a.status 
-    })))
-    
     let query = { isActive: true }
     
     // 根据类型筛选
     if (type === 'new') {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       query.startTime = { $gte: thirtyDaysAgo }
-      console.log('新活动查询条件:', query)
     } else if (type === 'old') {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       query.startTime = { $lt: thirtyDaysAgo }
-      console.log('旧活动查询条件:', query)
     }
     
     const skip = (page - 1) * limit
@@ -173,8 +161,6 @@ router.get('/list', async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .lean()
-    
-    console.log('查询结果数量:', activities.length)
     
     // 添加虚拟字段
     const activitiesWithVirtual = activities.map(activity => ({
