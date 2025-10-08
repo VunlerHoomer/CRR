@@ -105,20 +105,23 @@
       
       <div class="register-banner">
         <div class="banner-content">
-          <h3>加入我们</h3>
-          <p>开启你的答题抽签之旅</p>
+          <div class="logo-container">
+            <img src="/images/crr-logo.svg" alt="CRR城市定向" class="crr-logo" />
+          </div>
+          <h3>CRR城市定向</h3>
+          <p>探索城市，发现精彩</p>
           <div class="feature-list">
             <div class="feature-item">
+              <el-icon><Location /></el-icon>
+              <span>城市探索，定向挑战</span>
+            </div>
+            <div class="feature-item">
               <el-icon><Trophy /></el-icon>
-              <span>挑战自我，提升知识</span>
+              <span>团队协作，勇争第一</span>
             </div>
             <div class="feature-item">
               <el-icon><Star /></el-icon>
-              <span>积分奖励，兑换礼品</span>
-            </div>
-            <div class="feature-item">
-              <el-icon><ChatDotRound /></el-icon>
-              <span>社区互动，分享乐趣</span>
+              <span>积分奖励，成就解锁</span>
             </div>
           </div>
         </div>
@@ -132,7 +135,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
-import { Phone, Message, User, Lock, Trophy, Star, ChatDotRound } from '@element-plus/icons-vue'
+import { Phone, Message, User, Lock, Trophy, Star, Location } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -304,15 +307,25 @@ const handleRegister = async () => {
   text-align: center;
 }
 
-.banner-content h3 {
-  font-size: 36px;
+.logo-container {
   margin-bottom: 20px;
+}
+
+.crr-logo {
+  width: 120px;
+  height: auto;
+  border-radius: 8px;
+}
+
+.banner-content h3 {
+  font-size: 32px;
+  margin-bottom: 15px;
   font-weight: bold;
 }
 
 .banner-content p {
-  font-size: 18px;
-  margin-bottom: 40px;
+  font-size: 16px;
+  margin-bottom: 30px;
   opacity: 0.9;
 }
 

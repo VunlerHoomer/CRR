@@ -136,20 +136,23 @@
       
       <div class="login-banner">
         <div class="banner-content">
-          <h3>答题抽签互动平台</h3>
-          <p>智能答题 · 趣味抽签 · 实时互动</p>
+          <div class="logo-container">
+            <img src="/images/crr-logo.svg" alt="CRR城市定向" class="crr-logo" />
+          </div>
+          <h3>CRR城市定向</h3>
+          <p>探索城市 · 定向挑战 · 团队协作</p>
           <div class="feature-list">
             <div class="feature-item">
-              <el-icon><EditPen /></el-icon>
-              <span>海量题库，智能出题</span>
-            </div>
-            <div class="feature-item">
-              <el-icon><MagicStick /></el-icon>
-              <span>公平抽签，结果透明</span>
+              <el-icon><Location /></el-icon>
+              <span>城市探索，定向挑战</span>
             </div>
             <div class="feature-item">
               <el-icon><Trophy /></el-icon>
-              <span>实时排名，激发动力</span>
+              <span>团队协作，勇争第一</span>
+            </div>
+            <div class="feature-item">
+              <el-icon><Star /></el-icon>
+              <span>积分奖励，成就解锁</span>
             </div>
           </div>
         </div>
@@ -165,7 +168,7 @@ import { useUserStore } from '@/store/user'
 import { useAdminStore } from '@/store/admin'
 import { sendSmsCode } from '@/api/user'
 import { ElMessage } from 'element-plus'
-import { Phone, Message, Lock, User } from '@element-plus/icons-vue'
+import { Phone, Message, Lock, User, Location, Trophy, Star } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -472,15 +475,25 @@ const handleLogin = async () => {
   text-align: center;
 }
 
-.banner-content h3 {
-  font-size: 36px;
+.logo-container {
   margin-bottom: 20px;
+}
+
+.crr-logo {
+  width: 120px;
+  height: auto;
+  border-radius: 8px;
+}
+
+.banner-content h3 {
+  font-size: 32px;
+  margin-bottom: 15px;
   font-weight: bold;
 }
 
 .banner-content p {
-  font-size: 18px;
-  margin-bottom: 40px;
+  font-size: 16px;
+  margin-bottom: 30px;
   opacity: 0.9;
 }
 
