@@ -28,16 +28,6 @@
             />
           </el-form-item>
 
-          <el-form-item label="队伍描述" prop="description">
-            <el-input
-              v-model="createForm.description"
-              type="textarea"
-              placeholder="请输入队伍描述（可选）"
-              maxlength="100"
-              show-word-limit
-              :rows="3"
-            />
-          </el-form-item>
 
           <el-form-item label="活动选择" prop="activityId">
             <el-select
@@ -155,7 +145,6 @@ const generatedInvitationCode = ref('')
 
 const createForm = ref({
   name: '',
-  description: '',
   activityId: ''
 })
 
@@ -221,7 +210,6 @@ const createTeam = async () => {
     // 创建队伍
     const teamData = {
       name: createForm.value.name,
-      description: createForm.value.description || '',
       activity: createForm.value.activityId
     }
 
@@ -230,15 +218,9 @@ const createTeam = async () => {
     if (response.data.code === 200) {
       ElMessage.success('队伍创建成功！')
       
-      // 生成邀请码
-      try {
-        const inviteResponse = await generateInvitationCode()
-        if (inviteResponse.data.code === 200) {
-          generatedInvitationCode.value = inviteResponse.data.data.invitationCode
-        }
-      } catch (error) {
-        console.error('生成邀请码失败:', error)
-        ElMessage.warning('队伍创建成功，但邀请码生成失败')
+      // 从响应中获取邀请码
+      if (response.data.data.invitationCode) {
+        generatedInvitationCode.value = response.data.data.invitationCode
       }
     }
   } catch (error) {

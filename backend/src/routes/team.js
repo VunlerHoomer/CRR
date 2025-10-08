@@ -64,7 +64,6 @@ router.get('/my', auth, async (req, res) => {
 // 创建队伍
 router.post('/create', auth, [
   body('name').isLength({ min: 2, max: 50 }).withMessage('队伍名称长度应在2-50个字符之间'),
-  body('description').optional().isLength({ max: 200 }).withMessage('队伍描述不能超过200个字符'),
   body('activity').isMongoId().withMessage('活动ID格式不正确')
 ], async (req, res) => {
   try {
@@ -76,7 +75,7 @@ router.post('/create', auth, [
       })
     }
     
-    const { name, description, activity } = req.body
+    const { name, activity } = req.body
     
     // 检查活动是否存在且可报名
     const activityDoc = await Activity.findById(activity)
@@ -128,7 +127,7 @@ router.post('/create', auth, [
     // 创建队伍
     const team = new Team({
       name,
-      description: description || '',
+      description: '',
       captain: req.user._id,
       members: [{
         user: req.user._id,
@@ -136,6 +135,9 @@ router.post('/create', auth, [
       }],
       activity
     })
+    
+    // 生成邀请码
+    const invitationCode = team.generateInvitationCode()
     
     await team.save()
     
@@ -147,7 +149,10 @@ router.post('/create', auth, [
     res.json({
       code: 200,
       message: '队伍创建成功',
-      data: { team }
+      data: { 
+        team,
+        invitationCode 
+      }
     })
   } catch (error) {
     console.error('创建队伍失败:', error)
