@@ -73,13 +73,20 @@
       <div class="team-card">
         <div class="team-header">
           <h3 class="team-name">{{ teamInfo?.name || '未加入队伍' }}</h3>
-          <el-button 
-            v-if="!teamInfo" 
-            type="primary" 
-            @click="showJoinDialog = true"
-          >
-            加入队伍
-          </el-button>
+          <div v-if="!teamInfo" class="team-actions">
+            <el-button 
+              type="primary" 
+              @click="router.push('/create-team')"
+            >
+              创建队伍
+            </el-button>
+            <el-button 
+              type="success" 
+              @click="showJoinDialog = true"
+            >
+              加入队伍
+            </el-button>
+          </div>
           <div v-else class="team-actions">
             <el-button type="warning" size="small" @click="leaveTeam">退出队伍</el-button>
             <el-button type="info" size="small" @click="openChat">聊天</el-button>
@@ -464,6 +471,11 @@ onMounted(async () => {
 .team-actions {
   display: flex;
   gap: 10px;
+}
+
+.team-actions .el-button {
+  flex: 1;
+  min-width: 100px;
 }
 
 .invitation-section {

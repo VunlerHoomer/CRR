@@ -5,6 +5,11 @@ export const getMyTeam = () => {
   return request.get('/team/my')
 }
 
+// 创建队伍
+export const createTeam = (data) => {
+  return request.post('/team/create', data)
+}
+
 // 生成邀请码
 export const generateInvitationCode = () => {
   return request.post('/team/invitation-code')

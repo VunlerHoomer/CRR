@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Team = require('../models/Team')
 const User = require('../models/User')
+const Activity = require('../models/Activity')
 const { body, validationResult } = require('express-validator')
 const auth = require('../middleware/auth')
 
@@ -56,6 +57,103 @@ router.get('/my', auth, async (req, res) => {
     res.status(500).json({
       code: 500,
       message: '获取队伍信息失败'
+    })
+  }
+})
+
+// 创建队伍
+router.post('/create', auth, [
+  body('name').isLength({ min: 2, max: 50 }).withMessage('队伍名称长度应在2-50个字符之间'),
+  body('description').optional().isLength({ max: 200 }).withMessage('队伍描述不能超过200个字符'),
+  body('activity').isMongoId().withMessage('活动ID格式不正确')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        code: 400,
+        message: errors.array()[0].msg
+      })
+    }
+    
+    const { name, description, activity } = req.body
+    
+    // 检查活动是否存在且可报名
+    const activityDoc = await Activity.findById(activity)
+    if (!activityDoc) {
+      return res.status(400).json({
+        code: 400,
+        message: '活动不存在'
+      })
+    }
+    
+    const now = new Date()
+    if (!activityDoc.isActive || 
+        activityDoc.status !== 'upcoming' || 
+        now >= activityDoc.registrationDeadline ||
+        activityDoc.currentParticipants >= activityDoc.maxParticipants) {
+      return res.status(400).json({
+        code: 400,
+        message: '该活动已停止报名或已满员'
+      })
+    }
+    
+    // 检查用户是否已在其他队伍中
+    const existingTeam = await Team.findOne({
+      'members.user': req.user._id,
+      status: 'active'
+    })
+    
+    if (existingTeam) {
+      return res.status(400).json({
+        code: 400,
+        message: '您已在其他队伍中'
+      })
+    }
+    
+    // 检查队伍名称是否重复
+    const duplicateTeam = await Team.findOne({
+      name,
+      activity,
+      status: 'active'
+    })
+    
+    if (duplicateTeam) {
+      return res.status(400).json({
+        code: 400,
+        message: '该活动中已存在同名队伍'
+      })
+    }
+    
+    // 创建队伍
+    const team = new Team({
+      name,
+      description: description || '',
+      captain: req.user._id,
+      members: [{
+        user: req.user._id,
+        role: 'member'
+      }],
+      activity
+    })
+    
+    await team.save()
+    
+    // 更新活动参与人数
+    await Activity.findByIdAndUpdate(activity, {
+      $inc: { currentParticipants: 1 }
+    })
+    
+    res.json({
+      code: 200,
+      message: '队伍创建成功',
+      data: { team }
+    })
+  } catch (error) {
+    console.error('创建队伍失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '创建队伍失败'
     })
   }
 })

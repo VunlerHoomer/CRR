@@ -51,6 +51,12 @@ const routes = [
       component: () => import('@/views/ActivityDetail.vue'),
       meta: { title: '活动详情', requiresAuth: true }
     },
+    {
+      path: '/create-team',
+      name: 'CreateTeam',
+      component: () => import('@/views/CreateTeam.vue'),
+      meta: { title: '创建队伍', requiresAuth: true }
+    },
   // 管理员路由
   {
     path: '/admin',
