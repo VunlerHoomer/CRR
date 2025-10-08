@@ -1,101 +1,128 @@
 <template>
   <div class="register-page">
     <div class="register-container">
-      <div class="form-header">
-        <h1>创建账户</h1>
-        <p>填写信息完成注册</p>
+      <div class="register-form">
+        <div class="form-header">
+          <h2>创建账户</h2>
+          <p>填写信息完成注册</p>
+        </div>
+        
+        <el-form
+          ref="registerFormRef"
+          :model="registerForm"
+          :rules="registerRules"
+          class="register-form-content"
+          @submit.prevent="handleRegister"
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="registerForm.username"
+              placeholder="请输入用户名"
+              size="large"
+              :prefix-icon="User"
+            />
+          </el-form-item>
+
+          <el-form-item prop="password">
+            <el-input
+              v-model="registerForm.password"
+              type="password"
+              placeholder="请输入密码"
+              size="large"
+              :prefix-icon="Lock"
+              show-password
+            />
+          </el-form-item>
+
+          <el-form-item prop="confirmPassword">
+            <el-input
+              v-model="registerForm.confirmPassword"
+              type="password"
+              placeholder="请再次输入密码"
+              size="large"
+              :prefix-icon="Lock"
+              show-password
+            />
+          </el-form-item>
+
+          <el-form-item prop="email">
+            <el-input
+              v-model="registerForm.email"
+              placeholder="请输入邮箱 (可选)"
+              size="large"
+              :prefix-icon="Message"
+            />
+          </el-form-item>
+
+          <el-form-item prop="nickname">
+            <el-input
+              v-model="registerForm.nickname"
+              placeholder="请输入昵称 (可选)"
+              size="large"
+              :prefix-icon="User"
+            />
+          </el-form-item>
+
+          <el-form-item prop="phone">
+            <el-input
+              v-model="registerForm.phone"
+              placeholder="请输入手机号 (可选)"
+              size="large"
+              :prefix-icon="Phone"
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <div class="consent-section">
+              <el-checkbox v-model="registerForm.consent" class="consent-checkbox">
+                我同意收集上述数据并用于上述用途
+              </el-checkbox>
+            </div>
+          </el-form-item>
+          
+          <el-form-item>
+            <el-button
+              type="primary"
+              size="large"
+              class="register-button"
+              :loading="loading"
+              @click="handleRegister"
+            >
+              注册并登录
+            </el-button>
+          </el-form-item>
+        </el-form>
+        
+        <div class="form-footer">
+          <p>
+            已有账号？
+            <el-button type="text" @click="$router.push('/login')">
+              立即登录
+            </el-button>
+          </p>
+        </div>
       </div>
       
-      <el-form
-        ref="registerFormRef"
-        :model="registerForm"
-        :rules="registerRules"
-        class="register-form"
-        @submit.prevent="handleRegister"
-      >
-        <div class="form-item">
-          <label class="form-label">* 用户名</label>
-          <div class="input-line"></div>
-          <el-input
-            v-model="registerForm.username"
-            placeholder="请输入用户名"
-            class="custom-input"
-          />
+      <div class="register-banner">
+        <div class="banner-content">
+          <h3>加入我们</h3>
+          <p>开启你的答题抽签之旅</p>
+          <div class="feature-list">
+            <div class="feature-item">
+              <el-icon><Trophy /></el-icon>
+              <span>挑战自我，提升知识</span>
+            </div>
+            <div class="feature-item">
+              <el-icon><Star /></el-icon>
+              <span>积分奖励，兑换礼品</span>
+            </div>
+            <div class="feature-item">
+              <el-icon><ChatDotRound /></el-icon>
+              <span>社区互动，分享乐趣</span>
+            </div>
+          </div>
         </div>
-
-        <div class="form-item">
-          <label class="form-label">* 密码</label>
-          <div class="input-line"></div>
-          <el-input
-            v-model="registerForm.password"
-            type="password"
-            placeholder="请输入密码"
-            class="custom-input"
-            show-password
-          />
-        </div>
-
-        <div class="form-item">
-          <label class="form-label">* 确认密码</label>
-          <div class="input-line"></div>
-          <el-input
-            v-model="registerForm.confirmPassword"
-            type="password"
-            placeholder="请再次输入密码"
-            class="custom-input"
-            show-password
-          />
-        </div>
-
-        <div class="form-item">
-          <label class="form-label">邮箱</label>
-          <div class="input-line"></div>
-          <el-input
-            v-model="registerForm.email"
-            placeholder="请输入邮箱 (可选)"
-            class="custom-input"
-          />
-        </div>
-
-        <div class="form-item">
-          <label class="form-label">昵称</label>
-          <div class="input-line"></div>
-          <el-input
-            v-model="registerForm.nickname"
-            placeholder="请输入昵称 (可选)"
-            class="custom-input"
-          />
-        </div>
-
-        <div class="form-item">
-          <label class="form-label">手机号</label>
-          <div class="input-line"></div>
-          <el-input
-            v-model="registerForm.phone"
-            placeholder="请输入手机号 (可选)"
-            class="custom-input"
-          />
-        </div>
-
-        <div class="privacy-notice">
-          <p>手机号、邮箱并非强制填写。若您填写,手机号将仅用于登录、密码找回,邮箱仅用于获取基于邮箱的头像。</p>
-        </div>
-
-        <div class="consent-section">
-          <el-checkbox v-model="registerForm.consent" class="consent-checkbox">
-            我同意旦旦城定收集上述数据并用于上述用途
-          </el-checkbox>
-        </div>
-
-        <el-button
-          type="primary"
-          class="register-button"
-          :loading="loading"
-          @click="handleRegister"
-        >
-          注册并登录
-        </el-button>
-      </el-form>
+      </div>
     </div>
   </div>
 </template>
@@ -105,6 +132,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
+import { Phone, Message, User, Lock, Trophy, Star, ChatDotRound } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -192,7 +220,7 @@ const handleRegister = async () => {
 <style scoped>
 .register-page {
   min-height: 100vh;
-  background: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -200,9 +228,22 @@ const handleRegister = async () => {
 }
 
 .register-container {
-  max-width: 400px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  max-width: 900px;
   width: 100%;
-  padding: 40px;
+  min-height: 600px;
+}
+
+.register-form {
+  flex: 1;
+  padding: 60px 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .form-header {
@@ -210,122 +251,99 @@ const handleRegister = async () => {
   margin-bottom: 40px;
 }
 
-.form-header h1 {
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
+.form-header h2 {
+  font-size: 32px;
+  color: #303133;
   margin-bottom: 10px;
 }
 
 .form-header p {
+  color: #606266;
   font-size: 16px;
-  color: #666;
-  margin: 0;
 }
 
-.register-form {
-  width: 100%;
-}
-
-.form-item {
+.register-form-content {
   margin-bottom: 30px;
 }
 
-.form-label {
-  display: block;
-  font-size: 16px;
-  color: #333;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.input-line {
-  width: 100%;
-  height: 1px;
-  background-color: #ddd;
-  margin-bottom: 8px;
-}
-
-.custom-input {
-  width: 100%;
-}
-
-.custom-input :deep(.el-input__wrapper) {
-  border: none;
-  box-shadow: none;
-  padding: 8px 0;
-  font-size: 16px;
-}
-
-.custom-input :deep(.el-input__inner) {
-  padding: 0;
-  border: none;
-  font-size: 16px;
-  color: #333;
-}
-
-.custom-input :deep(.el-input__inner::placeholder) {
-  color: #999;
-}
-
-.privacy-notice {
-  margin: 30px 0;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-}
-
-.privacy-notice p {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-  margin: 0;
-}
-
 .consent-section {
-  margin: 30px 0;
+  margin: 20px 0;
 }
 
 .consent-checkbox {
   font-size: 14px;
-  color: #666;
-}
-
-.consent-checkbox :deep(.el-checkbox__label) {
-  font-size: 14px;
-  color: #666;
+  color: #606266;
 }
 
 .register-button {
   width: 100%;
   height: 48px;
   font-size: 16px;
+}
+
+.form-footer {
+  text-align: center;
+  color: #606266;
+}
+
+.form-footer p {
+  margin: 0;
+}
+
+.register-banner {
+  flex: 1;
+  background: linear-gradient(135deg, #67c23a 0%, #409eff 100%);
+  color: white;
+  padding: 60px 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-content {
+  text-align: center;
+}
+
+.banner-content h3 {
+  font-size: 36px;
+  margin-bottom: 20px;
   font-weight: bold;
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-  border: none;
-  border-radius: 8px;
-  margin-top: 20px;
 }
 
-.register-button:hover {
-  background: linear-gradient(135deg, #ff5252 0%, #ff7043 100%);
+.banner-content p {
+  font-size: 18px;
+  margin-bottom: 40px;
+  opacity: 0.9;
 }
 
-.register-button:focus {
-  background: linear-gradient(135deg, #ff5252 0%, #ff7043 100%);
+.feature-list {
+  text-align: left;
 }
 
-@media (max-width: 480px) {
+.feature-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.feature-item .el-icon {
+  margin-right: 12px;
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
   .register-container {
-    padding: 20px;
+    flex-direction: column;
+    max-width: 400px;
   }
   
-  .form-header h1 {
-    font-size: 24px;
+  .register-banner {
+    display: none;
   }
   
-  .form-header p {
-    font-size: 14px;
+  .register-form {
+    padding: 40px 30px;
   }
 }
 </style>
