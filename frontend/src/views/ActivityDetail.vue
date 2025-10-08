@@ -11,7 +11,12 @@
     <div class="activity-content">
       <div class="activity-info">
         <div class="activity-banner-large">
-          <img :src="activity.banner" :alt="activity.title" />
+          <LazyImage 
+            :src="activity.banner" 
+            :alt="activity.title"
+            width="100%"
+            height="300px"
+          />
         </div>
         
         <div class="activity-description">
@@ -85,6 +90,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
+import LazyImage from '@/components/LazyImage.vue'
 
 const router = useRouter()
 const route = useRoute()

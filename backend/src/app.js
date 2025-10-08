@@ -15,6 +15,14 @@ const lotteryRoutes = require('./routes/lottery')
 const rankingRoutes = require('./routes/ranking')
 const errorHandler = require('./middleware/errorHandler')
 const socketHandler = require('./services/socketHandler')
+const { 
+  enableCompression, 
+  securityHeaders, 
+  cacheMiddleware, 
+  responseTime,
+  apiLimiter,
+  loginLimiter 
+} = require('./middleware/performance')
 
 const app = express()
 const server = createServer(app)
@@ -28,8 +36,12 @@ const io = new Server(server, {
 // 连接数据库
 connectDB()
 
-// 中间件
-app.use(helmet())
+// 性能优化中间件
+app.use(enableCompression) // gzip压缩
+app.use(securityHeaders) // 安全头
+app.use(responseTime) // 响应时间监控
+
+// 基础中间件
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true
@@ -39,22 +51,15 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
 // 限流中间件
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15分钟
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 限制每个IP 100次请求
-  message: {
-    code: 429,
-    message: '请求过于频繁，请稍后再试'
-  }
-})
-app.use('/api/', limiter)
+app.use('/api/', apiLimiter)
+app.use('/api/auth/login', loginLimiter)
 
-// 路由
+// 路由（为只读路由添加缓存）
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
-app.use('/api/quiz', quizRoutes)
-app.use('/api/lottery', lotteryRoutes)
-app.use('/api/ranking', rankingRoutes)
+app.use('/api/quiz', cacheMiddleware(2 * 60 * 1000), quizRoutes) // 2分钟缓存
+app.use('/api/lottery', cacheMiddleware(5 * 60 * 1000), lotteryRoutes) // 5分钟缓存
+app.use('/api/ranking', cacheMiddleware(1 * 60 * 1000), rankingRoutes) // 1分钟缓存
 
 // 管理员路由
 app.use('/api/admin/auth', require('./routes/admin/auth'))

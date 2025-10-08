@@ -138,4 +138,12 @@ teamSchema.methods.removeMember = function(userId) {
   this.members.splice(memberIndex, 1)
 }
 
+// 添加数据库索引
+teamSchema.index({ activity: 1 })
+teamSchema.index({ captain: 1 })
+teamSchema.index({ status: 1 })
+teamSchema.index({ invitationCode: 1 }, { unique: true })
+teamSchema.index({ points: -1 })
+teamSchema.index({ createdAt: -1 })
+
 module.exports = mongoose.model('Team', teamSchema)

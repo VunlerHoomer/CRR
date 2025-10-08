@@ -92,4 +92,12 @@ activitySchema.virtual('activityType').get(function() {
   }
 })
 
+// 添加数据库索引
+activitySchema.index({ status: 1 })
+activitySchema.index({ startTime: 1 })
+activitySchema.index({ endTime: 1 })
+activitySchema.index({ isActive: 1 })
+activitySchema.index({ registrationDeadline: 1 })
+activitySchema.index({ createdAt: -1 })
+
 module.exports = mongoose.model('Activity', activitySchema)

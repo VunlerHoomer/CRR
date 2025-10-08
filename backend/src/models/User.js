@@ -155,4 +155,15 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 // 转换为JSON时包含虚拟字段
 userSchema.set('toJSON', { virtuals: true })
 
+// 添加数据库索引以提升查询性能
+userSchema.index({ phone: 1 })
+userSchema.index({ username: 1 })
+userSchema.index({ email: 1 })
+userSchema.index({ points: -1 })
+userSchema.index({ level: -1 })
+userSchema.index({ isActive: 1 })
+userSchema.index({ canAccessTaskManagement: 1 })
+userSchema.index({ createdAt: -1 })
+userSchema.index({ lastLoginAt: -1 })
+
 module.exports = mongoose.model('User', userSchema)

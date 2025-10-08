@@ -59,7 +59,12 @@
             <el-card class="activity-card" shadow="hover" @click="viewActivity(activity)">
               <div class="activity-content">
                 <div class="activity-image">
-                  <img :src="activity.banner" :alt="activity.title" />
+                  <LazyImage 
+                    :src="activity.banner" 
+                    :alt="activity.title"
+                    width="100%"
+                    height="200px"
+                  />
                   <div class="activity-status" :class="activity.status">
                     {{ getStatusText(activity.status) }}
                   </div>
@@ -98,6 +103,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { getActivityList } from '@/api/activity'
 import { Location, Calendar, User } from '@element-plus/icons-vue'
+import LazyImage from '@/components/LazyImage.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
