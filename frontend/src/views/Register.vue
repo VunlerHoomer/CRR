@@ -17,7 +17,7 @@
           <el-form-item prop="username">
             <el-input
               v-model="registerForm.username"
-              placeholder="请输入用户名"
+              placeholder="请输入用户名 (可选)"
               size="large"
               :prefix-icon="User"
             />
@@ -155,7 +155,6 @@ const registerForm = reactive({
 
 const registerRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度应在3-20个字符之间', trigger: 'blur' }
   ],
   password: [
@@ -202,11 +201,15 @@ const handleRegister = async () => {
     
     // 构建注册数据
     const registerData = {
-      username: registerForm.username,
       password: registerForm.password,
       email: registerForm.email || undefined,
       nickname: registerForm.nickname || undefined,
       phone: registerForm.phone || undefined
+    }
+    
+    // 可选字段
+    if (registerForm.username) {
+      registerData.username = registerForm.username
     }
     
     await userStore.registerUser(registerData)
