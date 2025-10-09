@@ -15,11 +15,11 @@ const rankingRoutes = require('../src/routes/ranking')
 const registrationRoutes = require('../src/routes/registration')
 const errorHandler = require('../src/middleware/errorHandler')
 
-// 导入性能中间件
-const { 
-  enableCompression, 
-  responseTime 
-} = require('../src/middleware/performance')
+// 性能中间件暂时禁用，避免Vercel部署问题
+// const { 
+//   enableCompression, 
+//   responseTime 
+// } = require('../src/middleware/performance')
 
 // 创建 Express 应用
 const app = express()
@@ -71,9 +71,9 @@ const connectDB = async () => {
 // 初始化数据库连接
 connectDB().catch(err => console.error('初始化数据库连接失败:', err))
 
-// 性能优化中间件
-app.use(enableCompression) // gzip压缩
-app.use(responseTime) // 响应时间监控
+// 性能优化中间件（简化以兼容Vercel）
+// app.use(enableCompression) // 暂时禁用，Vercel自带压缩
+// app.use(responseTime) // 暂时禁用，避免部署问题
 
 // 中间件
 app.use(express.json({ limit: '10mb' }))
