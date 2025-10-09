@@ -19,13 +19,7 @@ import Header from '@/components/Header.vue'
 const route = useRoute()
 
 const showHeader = computed(() => {
-  const hideHeader = route.meta.hideHeader
-  console.log('🔍 Header显示检查:', {
-    route: route.path,
-    hideHeader,
-    showHeader: !hideHeader
-  })
-  return !hideHeader
+  return !route.meta.hideHeader
 })
 </script>
 

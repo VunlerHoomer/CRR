@@ -59,20 +59,8 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const activeIndex = computed(() => route.path)
-const isLoggedIn = computed(() => {
-  const loggedIn = userStore.isLoggedIn
-  console.log('🔍 Header - 登录状态检查:', loggedIn)
-  return loggedIn
-})
-const user = computed(() => {
-  const userData = userStore.user
-  console.log('🔍 Header - 用户数据检查:', {
-    hasUser: !!userData,
-    userType: typeof userData,
-    userData: userData
-  })
-  return userData
-})
+const isLoggedIn = computed(() => userStore.isLoggedIn)
+const user = computed(() => userStore.user)
 
 const handleSelect = (key) => {
   router.push(key)

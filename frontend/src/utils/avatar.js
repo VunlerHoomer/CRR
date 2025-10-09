@@ -7,16 +7,16 @@ export const getAvatarText = (user) => {
     if (user.nickname && typeof user.nickname === 'string' && user.nickname.trim()) {
       const trimmed = user.nickname.trim()
       const firstChar = trimmed.charAt(0)
-      // 确保firstChar是字符串类型再调用toUpperCase
-      return String(firstChar).toUpperCase()
+      // 直接返回第一个字符，不转换大小写
+      return String(firstChar)
     }
     
     // 其次使用username
     if (user.username && typeof user.username === 'string' && user.username.trim()) {
       const trimmed = user.username.trim()
       const firstChar = trimmed.charAt(0)
-      // 确保firstChar是字符串类型再调用toUpperCase
-      return String(firstChar).toUpperCase()
+      // 直接返回第一个字符，不转换大小写
+      return String(firstChar)
     }
     
     // 最后使用phone
