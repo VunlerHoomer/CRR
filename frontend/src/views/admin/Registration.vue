@@ -4,10 +4,16 @@
       <template #header>
         <div class="card-header">
           <h2>报名管理</h2>
-          <el-button type="primary" @click="fetchRegistrations">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
+          <div class="header-actions">
+            <el-button type="primary" @click="fetchRegistrations">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+            <el-button type="warning" @click="clearCacheAndRefresh">
+              <el-icon><Refresh /></el-icon>
+              强制刷新
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -224,6 +230,8 @@ const fetchRegistrations = async () => {
     }
 
     console.log('📋 获取报名列表:', params)
+    console.log('🔑 当前管理员token:', adminStore.token ? '存在' : '不存在')
+    console.log('🔑 当前管理员状态:', adminStore.isLoggedIn ? '已登录' : '未登录')
 
     const response = await adminStore.request.get('/admin/registration/list', { params })
     console.log('📊 报名列表响应:', response)
@@ -232,9 +240,27 @@ const fetchRegistrations = async () => {
       registrations.value = response.data.registrations
       total.value = response.data.pagination.total
       console.log(`✅ 获取到 ${registrations.value.length} 条报名记录，总计 ${total.value} 条`)
+      
+      // 详细显示每条记录
+      if (registrations.value.length > 0) {
+        console.log('📋 报名记录详情:')
+        registrations.value.forEach((reg, index) => {
+          console.log(`${index + 1}. ${reg.registrationInfo.realName} (${reg.registrationInfo.phone}) - ${reg.status}`)
+        })
+      } else {
+        console.log('⚠️ 报名记录数组为空')
+      }
+    } else {
+      console.error('❌ API返回错误:', response.message)
     }
   } catch (error) {
     console.error('❌ 获取报名列表失败:', error)
+    console.error('❌ 错误详情:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    })
     
     let errorMessage = '获取报名列表失败'
     if (error.response?.status === 401) {
@@ -437,6 +463,36 @@ const formatDate = (date) => {
   return new Date(date).toLocaleString('zh-CN')
 }
 
+// 强制刷新（清除缓存）
+const clearCacheAndRefresh = async () => {
+  try {
+    console.log('🔄 执行强制刷新...')
+    
+    // 清除可能的缓存
+    if ('caches' in window) {
+      const cacheNames = await caches.keys()
+      for (const cacheName of cacheNames) {
+        await caches.delete(cacheName)
+      }
+    }
+    
+    // 重置数据
+    registrations.value = []
+    total.value = 0
+    
+    // 重新获取数据
+    await Promise.all([
+      fetchRegistrations(),
+      fetchActivities()
+    ])
+    
+    ElMessage.success('强制刷新完成')
+  } catch (error) {
+    console.error('强制刷新失败:', error)
+    ElMessage.error('强制刷新失败')
+  }
+}
+
 onMounted(() => {
   fetchRegistrations()
   fetchActivities()
@@ -465,6 +521,11 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .card-header h2 {
