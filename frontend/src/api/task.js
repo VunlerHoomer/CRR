@@ -1,16 +1,21 @@
 import request from './request'
 
-// 获取任务列表
-export const getTaskList = (params) => {
-  return request.get('/task/list', { params })
+// 获取活动的任务列表
+export const getActivityTasks = (activityId) => {
+  return request.get(`/task/activity/${activityId}`)
 }
 
-// 获取任务详情
-export const getTaskDetail = (taskId) => {
-  return request.get(`/task/${taskId}`)
+// 开始任务
+export const startTask = (taskId) => {
+  return request.post(`/task/${taskId}/start`)
 }
 
-// 获取区域列表
-export const getAreaList = () => {
-  return request.get('/task/areas/list')
+// 提交任务答案
+export const submitTask = (taskId, data) => {
+  return request.post(`/task/${taskId}/submit`, data)
+}
+
+// 获取用户的任务进度
+export const getTaskProgress = (activityId) => {
+  return request.get(`/task/my-progress/${activityId}`)
 }

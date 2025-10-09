@@ -20,28 +20,42 @@
       <!-- 筛选条件 -->
       <div class="filter-section">
         <el-form :model="filterForm" inline>
-          <el-form-item label="任务名称">
-            <el-input
-              v-model="filterForm.keyword"
-              placeholder="搜索任务名称或描述"
-              clearable
-              @clear="fetchTasks"
-              @keyup.enter="fetchTasks"
+          <el-form-item label="活动">
+            <el-select 
+              v-model="filterForm.activityId" 
+              placeholder="选择活动" 
+              clearable 
+              @change="fetchTasks"
               style="width: 200px"
-            />
+            >
+              <el-option 
+                v-for="activity in activities" 
+                :key="activity._id" 
+                :label="activity.title" 
+                :value="activity._id" 
+              />
+            </el-select>
           </el-form-item>
           <el-form-item label="任务类型">
             <el-select v-model="filterForm.type" placeholder="选择类型" clearable @change="fetchTasks">
               <el-option label="答题" value="quiz" />
-              <el-option label="位置" value="location" />
+              <el-option label="位置签到" value="location" />
               <el-option label="拍照" value="photo" />
               <el-option label="文本" value="text" />
+              <el-option label="自定义" value="custom" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="难度">
+            <el-select v-model="filterForm.difficulty" placeholder="选择难度" clearable @change="fetchTasks">
+              <el-option label="简单" value="easy" />
+              <el-option label="中等" value="medium" />
+              <el-option label="困难" value="hard" />
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="filterForm.status" placeholder="选择状态" clearable @change="fetchTasks">
-              <el-option label="启用" value="active" />
-              <el-option label="禁用" value="inactive" />
+            <el-select v-model="filterForm.isActive" placeholder="选择状态" clearable @change="fetchTasks">
+              <el-option label="启用" value="true" />
+              <el-option label="禁用" value="false" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -54,65 +68,49 @@
       </div>
 
       <!-- 任务列表 -->
-      <el-table
-        :data="tasks"
-        v-loading="loading"
-        style="width: 100%"
-      >
-        <el-table-column prop="taskId" label="任务ID" width="80" />
+      <el-table :data="tasks" v-loading="loading" style="width: 100%">
         <el-table-column prop="name" label="任务名称" width="120" />
+        <el-table-column prop="description" label="任务描述" min-width="200" />
+        <el-table-column prop="activity.title" label="所属活动" width="150" />
         <el-table-column prop="area" label="区域" width="120" />
-        <el-table-column prop="type" label="类型" width="80">
+        <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
-            <el-tag :type="getTypeTagType(row.type)" size="small">
+            <el-tag :type="getTypeTagType(row.type)">
               {{ getTypeText(row.type) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="difficulty" label="难度" width="80">
           <template #default="{ row }">
-            <el-tag :type="getDifficultyTagType(row.difficulty)" size="small">
+            <el-tag :type="getDifficultyTagType(row.difficulty)">
               {{ getDifficultyText(row.difficulty) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="points" label="积分" width="80" />
-        <el-table-column prop="totalAttempts" label="尝试次数" width="100" />
-        <el-table-column prop="completedCount" label="完成次数" width="100" />
-        <el-table-column prop="completionRate" label="完成率" width="120">
-          <template #default="{ row }">
-            <el-progress 
-              :percentage="row.completionRate" 
-              :stroke-width="8"
-              :show-text="false"
-            />
-            <span style="margin-left: 8px">{{ row.completionRate }}%</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="maxAttempts" label="最大尝试次数" width="120" />
         <el-table-column prop="isActive" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.isActive ? 'success' : 'danger'" size="small">
+            <el-tag :type="row.isActive ? 'success' : 'danger'">
               {{ row.isActive ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180">
+        <el-table-column label="统计" width="150">
           <template #default="{ row }">
-            {{ formatDate(row.createdAt) }}
+            <div class="stats">
+              <div>尝试: {{ row.stats?.totalAttempts || 0 }}</div>
+              <div>完成: {{ row.stats?.completedCount || 0 }}</div>
+              <div>完成率: {{ row.stats?.completionRate || 0 }}%</div>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="info" size="small" @click="viewTaskDetail(row)">详情</el-button>
-            <el-button type="primary" size="small" @click="editTask(row)">编辑</el-button>
-            <el-button 
-              :type="row.isActive ? 'warning' : 'success'" 
-              size="small" 
-              @click="toggleTaskStatus(row)"
-            >
-              {{ row.isActive ? '禁用' : '启用' }}
-            </el-button>
-            <el-button type="danger" size="small" @click="deleteTask(row)">删除</el-button>
+            <el-button size="small" @click="viewTask(row)">查看</el-button>
+            <el-button size="small" type="primary" @click="editTask(row)">编辑</el-button>
+            <el-button size="small" type="info" @click="viewRecords(row)">记录</el-button>
+            <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -130,119 +128,86 @@
       />
     </el-card>
 
-    <!-- 任务详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" title="任务详情" width="800px">
-      <div v-if="currentTask">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="任务ID">{{ currentTask.taskId }}</el-descriptions-item>
-          <el-descriptions-item label="任务名称">{{ currentTask.name }}</el-descriptions-item>
-          <el-descriptions-item label="区域">{{ currentTask.area }}</el-descriptions-item>
-          <el-descriptions-item label="类型">{{ getTypeText(currentTask.type) }}</el-descriptions-item>
-          <el-descriptions-item label="难度">{{ getDifficultyText(currentTask.difficulty) }}</el-descriptions-item>
-          <el-descriptions-item label="积分">{{ currentTask.points }}</el-descriptions-item>
-          <el-descriptions-item label="最大尝试次数">{{ currentTask.maxAttempts }}</el-descriptions-item>
-          <el-descriptions-item label="状态">{{ currentTask.isActive ? '启用' : '禁用' }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间" :span="2">
-            {{ formatDate(currentTask.createdAt) }}
-          </el-descriptions-item>
-        </el-descriptions>
-        
-        <div class="task-description" style="margin-top: 20px;">
-          <h4>任务描述</h4>
-          <p>{{ currentTask.description }}</p>
-        </div>
-
-        <div class="task-statistics" style="margin-top: 20px;">
-          <h4>统计数据</h4>
-          <el-row :gutter="20">
-            <el-col :span="6">
-              <el-statistic title="总尝试次数" :value="currentTask.totalAttempts" />
-            </el-col>
-            <el-col :span="6">
-              <el-statistic title="完成次数" :value="currentTask.completedCount" />
-            </el-col>
-            <el-col :span="6">
-              <el-statistic title="完成率" :value="currentTask.completionRate" suffix="%" />
-            </el-col>
-            <el-col :span="6">
-              <el-statistic title="总积分" :value="currentTask.totalPoints || 0" />
-            </el-col>
-          </el-row>
-        </div>
-      </div>
-    </el-dialog>
-
     <!-- 创建/编辑任务对话框 -->
     <el-dialog 
       v-model="showCreateDialog" 
-      :title="isEdit ? '编辑任务' : '新增任务'" 
-      width="600px"
+      :title="editingTask ? '编辑任务' : '新增任务'" 
+      width="800px"
     >
-      <el-form
+      <el-form 
         ref="taskFormRef"
-        :model="taskForm"
+        :model="taskForm" 
         :rules="taskRules"
-        label-width="100px"
+        label-width="120px"
       >
+        <el-form-item label="所属活动" prop="activity">
+          <el-select v-model="taskForm.activity" placeholder="选择活动" style="width: 100%">
+            <el-option 
+              v-for="activity in activities" 
+              :key="activity._id" 
+              :label="activity.title" 
+              :value="activity._id" 
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="任务名称" prop="name">
-          <el-input v-model="taskForm.name" placeholder="请输入任务名称" />
+          <el-input v-model="taskForm.name" placeholder="如：1-1、2-1等" />
         </el-form-item>
         <el-form-item label="任务描述" prop="description">
           <el-input 
             v-model="taskForm.description" 
             type="textarea" 
-            placeholder="请输入任务描述"
             :rows="3"
+            placeholder="详细描述任务内容"
           />
         </el-form-item>
-        <el-form-item label="区域" prop="area">
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <el-select 
-              v-model="taskForm.area" 
-              placeholder="选择区域" 
-              style="flex: 1;"
-              @change="onAreaChange"
-              clearable
-            >
-              <el-option 
-                v-for="area in areaOptions" 
-                :key="area" 
-                :label="area" 
-                :value="area" 
-              />
-            </el-select>
-            <el-button type="primary" size="small" @click="showAreaDialog = true">
-              <el-icon><Plus /></el-icon>
-              管理区域
-            </el-button>
-          </div>
-          <!-- 调试信息 -->
-          <div style="font-size: 12px; color: #999; margin-top: 5px;">
-            当前选中: {{ taskForm.area || '未选择' }}
-          </div>
-        </el-form-item>
-        <el-form-item label="任务类型" prop="type">
-          <el-select v-model="taskForm.type" placeholder="选择任务类型">
-            <el-option label="答题" value="quiz" />
-            <el-option label="位置" value="location" />
-            <el-option label="拍照" value="photo" />
-            <el-option label="文本" value="text" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="难度" prop="difficulty">
-          <el-radio-group v-model="taskForm.difficulty">
-            <el-radio label="easy">简单</el-radio>
-            <el-radio label="medium">中等</el-radio>
-            <el-radio label="hard">困难</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="积分" prop="points">
-          <el-input-number v-model="taskForm.points" :min="1" :max="1000" />
-        </el-form-item>
-        <el-form-item label="最大尝试次数" prop="maxAttempts">
-          <el-input-number v-model="taskForm.maxAttempts" :min="1" :max="10" />
-        </el-form-item>
-        <el-form-item label="状态">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="任务类型" prop="type">
+              <el-select v-model="taskForm.type" placeholder="选择类型" style="width: 100%">
+                <el-option label="答题" value="quiz" />
+                <el-option label="位置签到" value="location" />
+                <el-option label="拍照" value="photo" />
+                <el-option label="文本" value="text" />
+                <el-option label="自定义" value="custom" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="任务难度" prop="difficulty">
+              <el-select v-model="taskForm.difficulty" placeholder="选择难度" style="width: 100%">
+                <el-option label="简单" value="easy" />
+                <el-option label="中等" value="medium" />
+                <el-option label="困难" value="hard" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="任务区域" prop="area">
+              <el-input v-model="taskForm.area" placeholder="如：静安雕塑公园" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="任务积分" prop="points">
+              <el-input-number v-model="taskForm.points" :min="1" :max="100" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="最大尝试次数" prop="maxAttempts">
+              <el-input-number v-model="taskForm.maxAttempts" :min="1" :max="10" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="排序" prop="order">
+              <el-input-number v-model="taskForm.order" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="任务状态">
           <el-switch v-model="taskForm.isActive" active-text="启用" inactive-text="禁用" />
         </el-form-item>
       </el-form>
@@ -250,115 +215,122 @@
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
         <el-button type="primary" @click="submitTask" :loading="submitting">
-          {{ isEdit ? '更新' : '创建' }}
+          {{ editingTask ? '更新' : '创建' }}
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- 区域管理对话框 -->
-    <el-dialog v-model="showAreaDialog" title="区域管理" width="500px">
-      <div class="area-management">
-        <div class="add-area-section">
-          <el-input
-            v-model="newAreaName"
-            placeholder="输入新区域名称"
-            @keyup.enter="addArea"
-          >
-            <template #append>
-              <el-button type="primary" @click="addArea" :disabled="!newAreaName.trim()">
-                添加
-              </el-button>
-            </template>
-          </el-input>
+    <!-- 任务详情对话框 -->
+    <el-dialog v-model="showDetailDialog" title="任务详情" width="600px">
+      <div v-if="currentTask">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="任务名称">{{ currentTask.name }}</el-descriptions-item>
+          <el-descriptions-item label="所属活动">{{ currentTask.activity?.title }}</el-descriptions-item>
+          <el-descriptions-item label="任务描述" :span="2">{{ currentTask.description }}</el-descriptions-item>
+          <el-descriptions-item label="任务区域">{{ currentTask.area }}</el-descriptions-item>
+          <el-descriptions-item label="任务类型">{{ getTypeText(currentTask.type) }}</el-descriptions-item>
+          <el-descriptions-item label="任务难度">{{ getDifficultyText(currentTask.difficulty) }}</el-descriptions-item>
+          <el-descriptions-item label="任务积分">{{ currentTask.points }}</el-descriptions-item>
+          <el-descriptions-item label="最大尝试次数">{{ currentTask.maxAttempts }}</el-descriptions-item>
+          <el-descriptions-item label="任务状态">
+            <el-tag :type="currentTask.isActive ? 'success' : 'danger'">
+              {{ currentTask.isActive ? '启用' : '禁用' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="排序">{{ currentTask.order }}</el-descriptions-item>
+          <el-descriptions-item label="创建者">{{ currentTask.createdBy?.username }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDate(currentTask.createdAt) }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+    </el-dialog>
+
+    <!-- 任务记录对话框 -->
+    <el-dialog v-model="showRecordsDialog" title="任务完成记录" width="800px">
+      <div v-if="currentTask">
+        <div class="task-info">
+          <h3>{{ currentTask.name }} - {{ currentTask.description }}</h3>
         </div>
         
-        <div class="area-list" style="margin-top: 20px;">
-          <h4>现有区域</h4>
-          <el-table :data="areaOptions.map(name => ({ name }))" style="width: 100%">
-            <el-table-column prop="name" label="区域名称" />
-            <el-table-column label="操作" width="100">
-              <template #default="{ row, $index }">
-                <el-button 
-                  type="danger" 
-                  size="small" 
-                  @click="deleteArea($index)"
-                  :disabled="areaOptions.length <= 1"
-                >
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
+        <el-table :data="taskRecords" v-loading="recordsLoading" style="width: 100%">
+          <el-table-column prop="user.username" label="用户名" width="120" />
+          <el-table-column prop="user.phone" label="手机号" width="120" />
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getStatusTagType(row.status)">
+                {{ getStatusText(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="completion.attempts" label="尝试次数" width="100" />
+          <el-table-column prop="completion.score" label="得分" width="80" />
+          <el-table-column prop="completion.completedAt" label="完成时间" width="150">
+            <template #default="{ row }">
+              {{ row.completion.completedAt ? formatDate(row.completion.completedAt) : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="开始时间" width="150">
+            <template #default="{ row }">
+              {{ formatDate(row.createdAt) }}
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useAdminStore } from '@/store/admin'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { useAdminStore } from '@/store/admin'
 
 const adminStore = useAdminStore()
 
 const loading = ref(false)
 const submitting = ref(false)
-const detailDialogVisible = ref(false)
-const showCreateDialog = ref(false)
-const showAreaDialog = ref(false)
-const isEdit = ref(false)
-
-// 区域管理
-const areaOptions = ref([
-  '静安雕塑公园',
-  '人民广场', 
-  '外滩'
-])
-const newAreaName = ref('')
-
+const recordsLoading = ref(false)
+const tasks = ref([])
+const activities = ref([])
+const taskRecords = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
-
-const tasks = ref([])
+const showCreateDialog = ref(false)
+const showDetailDialog = ref(false)
+const showRecordsDialog = ref(false)
+const editingTask = ref(null)
 const currentTask = ref(null)
 
-const filterForm = reactive({
-  keyword: '',
+const filterForm = ref({
+  activityId: '',
   type: '',
-  status: ''
+  difficulty: '',
+  isActive: ''
 })
 
-const taskFormRef = ref()
-const taskForm = reactive({
+const taskForm = ref({
+  activity: '',
   name: '',
   description: '',
+  type: 'quiz',
+  difficulty: 'medium',
   area: '',
-  type: '',
-  difficulty: 'easy',
-  points: 10,
+  points: 20,
   maxAttempts: 3,
+  order: 0,
   isActive: true
 })
 
 const taskRules = {
-  name: [
-    { required: true, message: '请输入任务名称', trigger: 'blur' }
-  ],
-  description: [
-    { required: true, message: '请输入任务描述', trigger: 'blur' }
-  ],
-  area: [
-    { required: true, message: '请选择区域', trigger: 'change' }
-  ],
-  type: [
-    { required: true, message: '请选择任务类型', trigger: 'change' }
-  ],
-  points: [
-    { required: true, message: '请输入积分', trigger: 'blur' }
-  ]
+  activity: [{ required: true, message: '请选择活动', trigger: 'change' }],
+  name: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
+  description: [{ required: true, message: '请输入任务描述', trigger: 'blur' }],
+  type: [{ required: true, message: '请选择任务类型', trigger: 'change' }],
+  difficulty: [{ required: true, message: '请选择任务难度', trigger: 'change' }],
+  area: [{ required: true, message: '请输入任务区域', trigger: 'blur' }],
+  points: [{ required: true, message: '请输入任务积分', trigger: 'blur' }],
+  maxAttempts: [{ required: true, message: '请输入最大尝试次数', trigger: 'blur' }]
 }
 
 // 获取任务列表
@@ -368,267 +340,225 @@ const fetchTasks = async () => {
     const params = {
       page: currentPage.value,
       limit: pageSize.value,
-      ...filterForm
+      ...filterForm.value
     }
 
-    const response = await adminStore.request.get('/admin/dashboard/tasks', { params })
-    if (response.data.code === 200) {
-      tasks.value = response.data.data.tasks
-      total.value = response.data.data.pagination.total
+    const response = await adminStore.request.get('/admin/tasks/list', { params })
+    if (response.code === 200) {
+      tasks.value = response.data.tasks
+      total.value = response.data.pagination.total
     }
   } catch (error) {
+    console.error('获取任务列表失败:', error)
     ElMessage.error('获取任务列表失败')
   } finally {
     loading.value = false
   }
 }
 
-// 查看任务详情
-const viewTaskDetail = async (task) => {
+// 获取活动列表
+const fetchActivities = async () => {
   try {
-    const response = await adminStore.request.get(`/admin/dashboard/tasks/${task._id}`)
-    if (response.data.code === 200) {
-      currentTask.value = response.data.data.task
-      detailDialogVisible.value = true
+    const response = await adminStore.request.get('/admin/activity/list', {
+      params: { limit: 100 }
+    })
+    if (response.code === 200) {
+      activities.value = response.data.activities || []
     }
   } catch (error) {
+    console.error('获取活动列表失败:', error)
+    ElMessage.error('获取活动列表失败')
+  }
+}
+
+// 获取任务记录
+const fetchTaskRecords = async (taskId) => {
+  recordsLoading.value = true
+  try {
+    const response = await adminStore.request.get(`/admin/tasks/${taskId}/records`)
+    if (response.code === 200) {
+      taskRecords.value = response.data.records
+    }
+  } catch (error) {
+    console.error('获取任务记录失败:', error)
+    ElMessage.error('获取任务记录失败')
+  } finally {
+    recordsLoading.value = false
+  }
+}
+
+// 提交任务表单
+const submitTask = async () => {
+  try {
+    const data = editingTask.value 
+      ? { ...taskForm.value, _id: editingTask.value._id }
+      : taskForm.value
+
+    const response = editingTask.value
+      ? await adminStore.request.put(`/admin/tasks/${editingTask.value._id}`, data)
+      : await adminStore.request.post('/admin/tasks/create', data)
+
+    if (response.code === 200) {
+      ElMessage.success(editingTask.value ? '任务更新成功' : '任务创建成功')
+      showCreateDialog.value = false
+      resetTaskForm()
+      fetchTasks()
+    }
+  } catch (error) {
+    console.error('提交任务失败:', error)
+    ElMessage.error('提交任务失败')
+  }
+}
+
+// 查看任务详情
+const viewTask = async (task) => {
+  try {
+    const response = await adminStore.request.get(`/admin/tasks/${task._id}`)
+    if (response.code === 200) {
+      currentTask.value = response.data.task
+      showDetailDialog.value = true
+    }
+  } catch (error) {
+    console.error('获取任务详情失败:', error)
     ElMessage.error('获取任务详情失败')
   }
 }
 
 // 编辑任务
 const editTask = (task) => {
-  isEdit.value = true
-  Object.assign(taskForm, {
-    _id: task._id,
+  editingTask.value = task
+  taskForm.value = {
+    activity: task.activity._id,
     name: task.name,
     description: task.description,
-    area: task.area,
     type: task.type,
     difficulty: task.difficulty,
+    area: task.area,
     points: task.points,
     maxAttempts: task.maxAttempts,
+    order: task.order,
     isActive: task.isActive
-  })
+  }
   showCreateDialog.value = true
 }
 
-// 提交任务
-const submitTask = async () => {
-  if (!taskFormRef.value) return
-  
-  try {
-    // 手动验证必填字段
-    if (!taskForm.name?.trim()) {
-      ElMessage.error('请输入任务名称')
-      return
-    }
-    if (!taskForm.description?.trim()) {
-      ElMessage.error('请输入任务描述')
-      return
-    }
-    if (!taskForm.area?.trim()) {
-      ElMessage.error('请选择区域')
-      return
-    }
-    if (!taskForm.type) {
-      ElMessage.error('请选择任务类型')
-      return
-    }
-    if (!taskForm.points || taskForm.points <= 0) {
-      ElMessage.error('请输入有效的积分')
-      return
-    }
-    
-    // 表单验证
-    await taskFormRef.value.validate()
-    submitting.value = true
-
-    const url = isEdit.value ? `/admin/dashboard/tasks/${taskForm._id}` : '/admin/dashboard/tasks'
-    const method = isEdit.value ? 'put' : 'post'
-    
-    console.log('提交任务数据:', taskForm)
-    console.log('API URL:', url)
-    console.log('请求方法:', method)
-    console.log('完整的表单数据:', JSON.stringify(taskForm, null, 2))
-    
-    const response = await adminStore.request[method](url, taskForm)
-    
-    console.log('API响应:', response)
-    console.log('响应状态码:', response.status)
-    console.log('响应数据:', response.data)
-    
-    if (response.data.code === 200) {
-      ElMessage.success(isEdit.value ? '任务更新成功' : '任务创建成功')
-      showCreateDialog.value = false
-      resetForm()
-      fetchTasks()
-    } else {
-      ElMessage.error(response.data.message || '操作失败')
-    }
-  } catch (error) {
-    console.error('提交任务失败:', error)
-    if (error.name === 'ValidationError') {
-      ElMessage.error('请检查表单填写是否正确')
-    } else if (error.response?.data?.message) {
-      ElMessage.error(error.response.data.message)
-    } else if (error.message) {
-      ElMessage.error(error.message)
-    } else {
-      ElMessage.error('操作失败，请稍后重试')
-    }
-  } finally {
-    submitting.value = false
-  }
-}
-
-// 切换任务状态
-const toggleTaskStatus = async (task) => {
-  try {
-    const newStatus = !task.isActive
-    const response = await adminStore.request.put(`/admin/dashboard/tasks/${task._id}`, {
-      isActive: newStatus
-    })
-    
-    if (response.data.code === 200) {
-      task.isActive = newStatus
-      ElMessage.success(newStatus ? '任务已启用' : '任务已禁用')
-    }
-  } catch (error) {
-    ElMessage.error('操作失败')
-  }
+// 查看任务记录
+const viewRecords = async (task) => {
+  currentTask.value = task
+  showRecordsDialog.value = true
+  await fetchTaskRecords(task._id)
 }
 
 // 删除任务
-const deleteTask = (task) => {
-  ElMessageBox.confirm(
-    `确定要删除任务 "${task.name}" 吗？删除后将无法恢复！`,
-    '警告',
-    {
-      confirmButtonText: '确定删除',
+const deleteTask = async (task) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个任务吗？', '确认删除', {
+      confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
+    })
+
+    const response = await adminStore.request.delete(`/admin/tasks/${task._id}`)
+    if (response.code === 200) {
+      ElMessage.success('任务删除成功')
+      fetchTasks()
     }
-  ).then(async () => {
-    try {
-      const response = await adminStore.request.delete(`/admin/dashboard/tasks/${task._id}`)
-      if (response.data.code === 200) {
-        ElMessage.success('删除成功')
-        fetchTasks()
-      }
-    } catch (error) {
-      ElMessage.error('删除失败')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除任务失败:', error)
+      ElMessage.error('删除任务失败')
     }
-  }).catch(() => {})
+  }
 }
 
 // 重置表单
-const resetForm = () => {
-  Object.assign(taskForm, {
+const resetTaskForm = () => {
+  taskForm.value = {
+    activity: '',
     name: '',
     description: '',
+    type: 'quiz',
+    difficulty: 'medium',
     area: '',
-    type: '',
-    difficulty: 'easy',
-    points: 10,
+    points: 20,
     maxAttempts: 3,
+    order: 0,
     isActive: true
-  })
-  isEdit.value = false
-  taskFormRef.value?.resetFields()
+  }
+  editingTask.value = null
 }
 
 // 工具函数
 const getTypeText = (type) => {
-  const typeMap = {
+  const types = {
     quiz: '答题',
-    location: '位置',
+    location: '位置签到',
     photo: '拍照',
-    text: '文本'
+    text: '文本',
+    custom: '自定义'
   }
-  return typeMap[type] || '未知'
+  return types[type] || type
 }
 
 const getTypeTagType = (type) => {
-  const typeMap = {
+  const types = {
     quiz: 'primary',
     location: 'success',
     photo: 'warning',
-    text: 'info'
+    text: 'info',
+    custom: 'danger'
   }
-  return typeMap[type] || 'info'
+  return types[type] || 'info'
 }
 
 const getDifficultyText = (difficulty) => {
-  const difficultyMap = {
+  const difficulties = {
     easy: '简单',
     medium: '中等',
     hard: '困难'
   }
-  return difficultyMap[difficulty] || '未知'
+  return difficulties[difficulty] || difficulty
 }
 
 const getDifficultyTagType = (difficulty) => {
-  const difficultyMap = {
+  const types = {
     easy: 'success',
     medium: 'warning',
     hard: 'danger'
   }
-  return difficultyMap[difficulty] || 'info'
+  return types[difficulty] || 'info'
+}
+
+const getStatusText = (status) => {
+  const statuses = {
+    pending: '未开始',
+    in_progress: '进行中',
+    completed: '已完成',
+    failed: '失败',
+    abandoned: '已放弃'
+  }
+  return statuses[status] || status
+}
+
+const getStatusTagType = (status) => {
+  const types = {
+    pending: 'info',
+    in_progress: 'warning',
+    completed: 'success',
+    failed: 'danger',
+    abandoned: 'info'
+  }
+  return types[status] || 'info'
 }
 
 const formatDate = (date) => {
-  if (!date) return '-'
+  if (!date) return ''
   return new Date(date).toLocaleString('zh-CN')
-}
-
-// 区域选择变化处理
-const onAreaChange = (value) => {
-  console.log('区域选择变化:', value)
-  console.log('当前表单数据:', taskForm)
-}
-
-// 区域管理方法
-const addArea = () => {
-  const name = newAreaName.value.trim()
-  if (!name) {
-    ElMessage.warning('请输入区域名称')
-    return
-  }
-  
-  // 检查是否已存在
-  if (areaOptions.value.includes(name)) {
-    ElMessage.warning('该区域已存在')
-    return
-  }
-  
-  areaOptions.value.push(name)
-  newAreaName.value = ''
-  ElMessage.success('区域添加成功')
-}
-
-const deleteArea = (index) => {
-  if (areaOptions.value.length <= 1) {
-    ElMessage.warning('至少需要保留一个区域')
-    return
-  }
-  
-  ElMessageBox.confirm(
-    `确定要删除区域 "${areaOptions.value[index]}" 吗？`,
-    '警告',
-    {
-      confirmButtonText: '确定删除',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    areaOptions.value.splice(index, 1)
-    ElMessage.success('区域删除成功')
-  }).catch(() => {})
 }
 
 onMounted(() => {
   fetchTasks()
+  fetchActivities()
 })
 </script>
 
@@ -651,38 +581,28 @@ onMounted(() => {
 .filter-section {
   margin-bottom: 20px;
   padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
 
-.task-statistics {
-  margin-top: 20px;
+.stats {
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.task-statistics h4 {
-  margin-bottom: 15px;
-  color: #303133;
+.stats div {
+  margin-bottom: 2px;
 }
 
-@media (max-width: 768px) {
-  .card-header {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-  }
-  
-  .header-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-  
-  .filter-section .el-form {
-    flex-direction: column;
-  }
-  
-  .filter-section .el-form-item {
-    margin-right: 0;
-    margin-bottom: 10px;
-  }
+.task-info {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.task-info h3 {
+  margin: 0;
+  color: #333;
 }
 </style>
