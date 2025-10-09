@@ -55,7 +55,7 @@ const routes = [
       path: '/activity/:id/tasks',
       name: 'TaskManagement',
       component: () => import('@/views/TaskManagement.vue'),
-      meta: { title: '任务管理', requiresAuth: true }
+      meta: { title: '任务管理', requiresAuth: true, hideHeader: true }
     },
     {
       path: '/create-team',
