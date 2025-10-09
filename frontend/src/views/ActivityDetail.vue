@@ -1,14 +1,15 @@
 <template>
-  <div class="activity-detail">
-    <div class="activity-header">
-      <el-button @click="goBack" class="back-button">
-        <el-icon><ArrowLeft /></el-icon>
-        返回
-      </el-button>
-      <h1>{{ activity.title }}</h1>
-    </div>
+  <div class="activity-detail" v-loading="loading">
+    <div v-if="activity">
+      <div class="activity-header">
+        <el-button @click="goBack" class="back-button">
+          <el-icon><ArrowLeft /></el-icon>
+          返回
+        </el-button>
+        <h1>{{ activity.title }}</h1>
+      </div>
 
-    <div class="activity-content">
+      <div class="activity-content">
       <div class="activity-info">
         <div class="activity-banner-large">
           <LazyImage 
@@ -29,7 +30,7 @@
           <div class="detail-grid">
             <div class="detail-item">
               <span class="label">活动时间：</span>
-              <span class="value">{{ activity.startTime }} - {{ activity.endTime }}</span>
+              <span class="value">{{ formatDateTime(activity.startTime) }} - {{ formatDateTime(activity.endTime) }}</span>
             </div>
             <div class="detail-item">
               <span class="label">活动地点：</span>
@@ -37,11 +38,15 @@
             </div>
             <div class="detail-item">
               <span class="label">参与人数：</span>
-              <span class="value">{{ activity.participants }}/{{ activity.maxParticipants }}</span>
+              <span class="value">{{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants }}</span>
             </div>
             <div class="detail-item">
               <span class="label">难度等级：</span>
               <span class="value">{{ activity.difficulty }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">报名截止：</span>
+              <span class="value">{{ formatDateTime(activity.registrationDeadline) }}</span>
             </div>
           </div>
         </div>
@@ -129,6 +134,7 @@
         </el-button>
       </template>
     </el-dialog>
+    </div>
   </div>
 </template>
 
@@ -140,23 +146,14 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import LazyImage from '@/components/LazyImage.vue'
 import { registerActivity as registerActivityAPI, checkRegistration } from '@/api/registration'
+import { getActivityDetail } from '@/api/activity'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const activity = ref({
-  id: 1,
-  title: '溯槎问帙',
-  description: '溯槎问帙，探索未知的奇幻世界。在这场充满神秘色彩的冒险中，你将穿越时空的漩涡，寻找失落的宝藏，揭开古老的秘密。准备好迎接这场充满挑战的奇幻之旅吧！',
-  banner: '/images/activities/suchawenzhi.jpg',
-  startTime: '2024-01-15 09:00',
-  endTime: '2024-01-15 18:00',
-  location: '上海市徐汇区',
-  participants: 45,
-  maxParticipants: 150,
-  difficulty: '中等'
-})
+const activity = ref(null)
+const loading = ref(true)
 
 const registering = ref(false)
 const showRegistrationDialog = ref(false)
@@ -200,10 +197,38 @@ const goBack = () => {
   router.back()
 }
 
+// 获取活动详情
+const fetchActivityDetail = async () => {
+  try {
+    loading.value = true
+    const activityId = route.params.id
+    
+    if (!activityId) {
+      ElMessage.error('活动ID不存在')
+      router.back()
+      return
+    }
+    
+    const response = await getActivityDetail(activityId)
+    if (response.code === 200) {
+      activity.value = response.data.activity
+    }
+  } catch (error) {
+    console.error('获取活动详情失败:', error)
+    ElMessage.error('获取活动详情失败')
+    router.back()
+  } finally {
+    loading.value = false
+  }
+}
+
 // 检查报名状态
 const checkRegistrationStatus = async () => {
   try {
-    const response = await checkRegistration(route.params.id)
+    const activityId = route.params.id
+    if (!activityId) return
+    
+    const response = await checkRegistration(activityId)
     if (response.code === 200) {
       registrationInfo.value = {
         isRegistered: response.data.isRegistered,
@@ -258,13 +283,25 @@ const goToTaskManagement = () => {
   router.push(`/activity/${route.params.id}/tasks`)
 }
 
+// 格式化日期时间
+const formatDateTime = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 onMounted(async () => {
-  // 根据路由参数加载活动详情
-  const activityId = route.params.id
-  console.log('加载活动详情:', activityId)
+  // 获取活动详情
+  await fetchActivityDetail()
   
   // 检查报名状态
-  if (userStore.isLoggedIn) {
+  if (userStore.isLoggedIn && activity.value) {
     await checkRegistrationStatus()
   }
   
