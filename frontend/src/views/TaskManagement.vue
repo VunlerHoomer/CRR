@@ -399,6 +399,13 @@ const checkTaskPermission = async () => {
     permissionLoading.value = true
     const activityId = route.params.id
     
+    console.log('🔐 开始权限检查:', {
+      activityId,
+      activityIdType: typeof activityId,
+      isLoggedIn: userStore.isLoggedIn,
+      hasUser: !!userStore.user
+    })
+    
     if (!activityId || activityId === 'undefined' || activityId === 'null') {
       throw new Error('活动ID无效')
     }
@@ -407,13 +414,13 @@ const checkTaskPermission = async () => {
       throw new Error('请先登录')
     }
     
-    console.log('🔐 检查任务管理权限:', activityId)
-    
+    console.log('📡 调用权限检查API...')
     const response = await checkRegistration(activityId)
     console.log('📊 权限检查响应:', response)
     
-    if (response.code === 200 && response.data.registration) {
+    if (response && response.code === 200 && response.data && response.data.registration) {
       const registration = response.data.registration
+      console.log('📋 报名信息:', registration)
       
       // 检查报名状态和任务权限
       if (registration.status === 'approved' && registration.canAccessTaskManagement) {
@@ -423,23 +430,33 @@ const checkTaskPermission = async () => {
       } else if (registration.status === 'pending') {
         permissionError.value = '您的报名正在审核中，请等待管理员审核通过'
         hasPermission.value = false
+        console.log('⏳ 报名待审核')
       } else if (registration.status === 'rejected') {
         permissionError.value = '您的报名已被拒绝，无法访问任务管理'
         hasPermission.value = false
+        console.log('❌ 报名被拒绝')
       } else if (!registration.canAccessTaskManagement) {
         permissionError.value = '您没有任务管理权限，请联系管理员'
         hasPermission.value = false
+        console.log('🚫 无任务权限')
       }
     } else {
       permissionError.value = '您尚未报名此活动，请先报名'
       hasPermission.value = false
+      console.log('📝 未报名活动')
     }
   } catch (error) {
     console.error('❌ 权限检查失败:', error)
+    console.error('❌ 错误详情:', {
+      message: error.message,
+      response: error.response,
+      stack: error.stack
+    })
     permissionError.value = error.response?.data?.message || error.message || '权限检查失败'
     hasPermission.value = false
   } finally {
     permissionLoading.value = false
+    console.log('🏁 权限检查完成')
   }
 }
 
@@ -527,12 +544,28 @@ const getTaskStatusText = (status) => {
 }
 
 onMounted(async () => {
-  // 检查任务管理权限
-  await checkTaskPermission()
-  
-  // 根据路由参数加载活动详情
-  const activityId = route.params.id
-  console.log('加载任务管理:', activityId)
+  try {
+    console.log('🚀 任务管理页面开始加载...')
+    
+    // 检查用户状态
+    console.log('👤 用户状态:', {
+      isLoggedIn: userStore.isLoggedIn,
+      hasUser: !!userStore.user,
+      userData: userStore.user
+    })
+    
+    // 检查任务管理权限
+    await checkTaskPermission()
+    
+    // 根据路由参数加载活动详情
+    const activityId = route.params.id
+    console.log('📋 活动ID:', activityId)
+    
+    console.log('✅ 任务管理页面加载完成')
+  } catch (error) {
+    console.error('❌ 任务管理页面加载失败:', error)
+    ElMessage.error('页面加载失败: ' + error.message)
+  }
 })
 </script>
 
