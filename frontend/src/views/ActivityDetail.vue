@@ -74,6 +74,17 @@
         <el-button type="info" size="large" @click="shareActivity">
           分享活动
         </el-button>
+        
+        <!-- 任务管理入口 -->
+        <el-button 
+          v-if="registrationInfo.isRegistered"
+          type="warning" 
+          size="large"
+          @click="goToTaskManagement"
+        >
+          <el-icon><Box /></el-icon>
+          任务管理
+        </el-button>
 
       </div>
     </div>
@@ -133,7 +144,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Box } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import LazyImage from '@/components/LazyImage.vue'
 import { registerActivity as registerActivityAPI, checkRegistration } from '@/api/registration'
@@ -303,6 +314,11 @@ const submitRegistration = async () => {
 
 const shareActivity = () => {
   ElMessage.success('活动链接已复制到剪贴板')
+}
+
+// 跳转到任务管理页面
+const goToTaskManagement = () => {
+  router.push(`/activity/${route.params.id}/tasks`)
 }
 
 
