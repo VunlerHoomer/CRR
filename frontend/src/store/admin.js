@@ -24,7 +24,18 @@ adminRequest.interceptors.request.use(
 // 响应拦截器
 adminRequest.interceptors.response.use(
   (response) => {
-    return response
+    const { data } = response
+    
+    // 后端返回的数据结构：{ code: 200, message: '...', data: {...} }
+    if (data.code === 200) {
+      return data
+    } else {
+      // 使用Element Plus的消息提示
+      import('element-plus').then(({ ElMessage }) => {
+        ElMessage.error(data.message || '请求失败')
+      })
+      return Promise.reject(new Error(data.message || '请求失败'))
+    }
   },
   (error) => {
     if (error.response?.status === 401) {
@@ -47,8 +58,7 @@ export const useAdminStore = defineStore('admin', () => {
   const login = async (username, password) => {
     loading.value = true
     try {
-      const response = await adminRequest.post('/admin/auth/login', { username, password })
-      const data = response.data
+      const data = await adminRequest.post('/admin/auth/login', { username, password })
       
       if (data.code === 200) {
         token.value = data.data.token
@@ -69,8 +79,7 @@ export const useAdminStore = defineStore('admin', () => {
   const fetchAdminInfo = async () => {
     if (!token.value) return
     try {
-      const response = await adminRequest.get('/admin/auth/profile')
-      const data = response.data
+      const data = await adminRequest.get('/admin/auth/profile')
       
       if (data.code === 200) {
         admin.value = data.data.admin
