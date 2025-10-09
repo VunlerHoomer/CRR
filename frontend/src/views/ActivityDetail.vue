@@ -75,15 +75,6 @@
           分享活动
         </el-button>
 
-        <!-- 任务管理入口 - 仅对有权限的用户显示 -->
-        <el-button 
-          v-if="registrationInfo.canAccessTaskManagement"
-          type="warning" 
-          size="large"
-          @click="goToTaskManagement"
-        >
-          任务管理
-        </el-button>
       </div>
     </div>
 
@@ -162,7 +153,6 @@ const registrationFormRef = ref()
 // 报名信息
 const registrationInfo = ref({
   isRegistered: false,
-  canAccessTaskManagement: false,
   registration: null
 })
 
@@ -232,7 +222,6 @@ const checkRegistrationStatus = async () => {
     if (response.code === 200) {
       registrationInfo.value = {
         isRegistered: response.data.isRegistered,
-        canAccessTaskManagement: response.data.registration?.canAccessTaskManagement || false,
         registration: response.data.registration
       }
     }
@@ -316,10 +305,6 @@ const shareActivity = () => {
   ElMessage.success('活动链接已复制到剪贴板')
 }
 
-// 跳转到任务管理页面
-const goToTaskManagement = () => {
-  router.push(`/activity/${route.params.id}/tasks`)
-}
 
 // 格式化日期时间
 const formatDateTime = (date) => {

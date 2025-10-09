@@ -52,12 +52,6 @@ const routes = [
       meta: { title: '活动详情', requiresAuth: true }
     },
     {
-      path: '/activity/:id/tasks',
-      name: 'TaskManagement',
-      component: () => import('@/views/TaskManagement.vue'),
-      meta: { title: '任务管理', requiresAuth: true, hideHeader: true }
-    },
-    {
       path: '/create-team',
       name: 'CreateTeam',
       component: () => import('@/views/CreateTeam.vue'),
