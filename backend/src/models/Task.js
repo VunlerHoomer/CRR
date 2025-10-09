@@ -247,4 +247,48 @@ taskSchema.statics.getNextTask = async function(activityId, areaId, userId) {
   return null
 }
 
+// 实例方法：验证答案
+taskSchema.methods.validateAnswer = function(userAnswer) {
+  if (!userAnswer) {
+    return false
+  }
+  
+  switch (this.type) {
+    case 'text':
+      if (this.answerMatchMode === 'exact') {
+        return userAnswer.toString().trim().toLowerCase() === this.answer.toString().trim().toLowerCase()
+      } else if (this.answerMatchMode === 'includes') {
+        return userAnswer.toString().toLowerCase().includes(this.answer.toString().toLowerCase())
+      } else if (this.answerMatchMode === 'regex') {
+        try {
+          const regex = new RegExp(this.answer, 'i')
+          return regex.test(userAnswer.toString())
+        } catch (error) {
+          return false
+        }
+      }
+      return false
+      
+    case 'number':
+      const userNum = parseFloat(userAnswer)
+      const correctNum = parseFloat(this.answer)
+      return !isNaN(userNum) && !isNaN(correctNum) && userNum === correctNum
+      
+    case 'single_choice':
+      return userAnswer === this.correctOptions[0]
+      
+    case 'multi_choice':
+      if (!Array.isArray(userAnswer)) {
+        return false
+      }
+      if (userAnswer.length !== this.correctOptions.length) {
+        return false
+      }
+      return this.correctOptions.every(option => userAnswer.includes(option))
+      
+    default:
+      return false
+  }
+}
+
 module.exports = mongoose.model('Task', taskSchema)

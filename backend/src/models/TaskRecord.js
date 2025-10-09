@@ -175,6 +175,46 @@ taskRecordSchema.statics.canAccessTask = async function(userId, activityId, area
   return !!previousRecord
 }
 
+// 静态方法：检查用户是否可以访问某个任务
+taskRecordSchema.statics.canAccessTask = async function(userId, activityId, areaId, taskId) {
+  const Task = mongoose.model('Task')
+  
+  // 获取当前任务
+  const currentTask = await Task.findById(taskId)
+  if (!currentTask) {
+    return false
+  }
+  
+  // 如果是第一个任务（order为0或最小），可以直接访问
+  if (currentTask.order === 0) {
+    return true
+  }
+  
+  // 获取该区域所有任务，按order排序
+  const allTasks = await Task.find({ 
+    activity: activityId,
+    area: areaId,
+    isActive: true 
+  }).sort({ order: 1 })
+  
+  // 找到当前任务的前一个任务
+  const currentIndex = allTasks.findIndex(t => t._id.toString() === taskId)
+  if (currentIndex <= 0) {
+    return true // 第一个任务或找不到
+  }
+  
+  const previousTask = allTasks[currentIndex - 1]
+  
+  // 检查前一个任务是否已完成
+  const previousRecord = await this.findOne({
+    user: userId,
+    task: previousTask._id,
+    isCorrect: true
+  })
+  
+  return !!previousRecord
+}
+
 // 静态方法：获取用户统计数据
 taskRecordSchema.statics.getUserStats = async function(userId, activityId) {
   const stats = await this.aggregate([
