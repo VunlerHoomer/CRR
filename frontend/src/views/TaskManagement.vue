@@ -19,8 +19,29 @@
       </div>
     </div>
 
+    <!-- 权限检查加载状态 -->
+    <div v-if="permissionLoading" class="permission-loading">
+      <el-icon class="is-loading"><Loading /></el-icon>
+      <span>正在检查权限...</span>
+    </div>
+
+    <!-- 权限被拒绝显示 -->
+    <div v-else-if="!hasPermission" class="permission-denied">
+      <div class="denied-content">
+        <el-icon size="64" color="#f56c6c"><Warning /></el-icon>
+        <h2>访问受限</h2>
+        <p>{{ permissionError }}</p>
+        <div class="denied-actions">
+          <el-button type="primary" @click="goBack">返回活动详情</el-button>
+          <el-button v-if="permissionError.includes('尚未报名')" @click="goToActivityDetail">
+            去报名
+          </el-button>
+        </div>
+      </div>
+    </div>
+
     <!-- 任务列表区域 -->
-    <div class="task-section">
+    <div v-else class="task-section">
       <div class="task-header">
         <h1 class="task-title">任务列表</h1>
         <div class="task-controls">
@@ -182,10 +203,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Box, Location, Clock, Star } from '@element-plus/icons-vue'
+import { ArrowLeft, Box, Location, Clock, Star, Loading, Warning } from '@element-plus/icons-vue'
+import { useUserStore } from '@/store/user'
+import { checkRegistration } from '@/api/registration'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 
 // 响应式数据
 const showCompleted = ref(false)
@@ -193,6 +217,11 @@ const selectedArea = ref('all')
 const selectedStatus = ref('all')
 const showTaskDialog = ref(false)
 const selectedTask = ref(null)
+
+// 权限控制
+const hasPermission = ref(false)
+const permissionLoading = ref(true)
+const permissionError = ref('')
 
 // 任务数据
 const areas = ref([
@@ -358,6 +387,62 @@ const goBack = () => {
   router.back()
 }
 
+// 跳转到活动详情页面报名
+const goToActivityDetail = () => {
+  const activityId = route.params.id
+  router.push(`/activity/${activityId}`)
+}
+
+// 检查任务管理权限
+const checkTaskPermission = async () => {
+  try {
+    permissionLoading.value = true
+    const activityId = route.params.id
+    
+    if (!activityId || activityId === 'undefined' || activityId === 'null') {
+      throw new Error('活动ID无效')
+    }
+    
+    if (!userStore.isLoggedIn) {
+      throw new Error('请先登录')
+    }
+    
+    console.log('🔐 检查任务管理权限:', activityId)
+    
+    const response = await checkRegistration(activityId)
+    console.log('📊 权限检查响应:', response)
+    
+    if (response.code === 200 && response.data.registration) {
+      const registration = response.data.registration
+      
+      // 检查报名状态和任务权限
+      if (registration.status === 'approved' && registration.canAccessTaskManagement) {
+        hasPermission.value = true
+        permissionError.value = ''
+        console.log('✅ 用户有任务管理权限')
+      } else if (registration.status === 'pending') {
+        permissionError.value = '您的报名正在审核中，请等待管理员审核通过'
+        hasPermission.value = false
+      } else if (registration.status === 'rejected') {
+        permissionError.value = '您的报名已被拒绝，无法访问任务管理'
+        hasPermission.value = false
+      } else if (!registration.canAccessTaskManagement) {
+        permissionError.value = '您没有任务管理权限，请联系管理员'
+        hasPermission.value = false
+      }
+    } else {
+      permissionError.value = '您尚未报名此活动，请先报名'
+      hasPermission.value = false
+    }
+  } catch (error) {
+    console.error('❌ 权限检查失败:', error)
+    permissionError.value = error.response?.data?.message || error.message || '权限检查失败'
+    hasPermission.value = false
+  } finally {
+    permissionLoading.value = false
+  }
+}
+
 const clearProgress = async () => {
   try {
     await ElMessageBox.confirm(
@@ -441,7 +526,10 @@ const getTaskStatusText = (status) => {
   return textMap[status] || '未知'
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 检查任务管理权限
+  await checkTaskPermission()
+  
   // 根据路由参数加载活动详情
   const activityId = route.params.id
   console.log('加载任务管理:', activityId)
@@ -453,6 +541,56 @@ onMounted(() => {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   position: relative;
+}
+
+/* 权限检查样式 */
+.permission-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+  color: #666;
+  font-size: 16px;
+}
+
+.permission-denied {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+}
+
+.denied-content {
+  text-align: center;
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+}
+
+.denied-content h2 {
+  color: #f56c6c;
+  margin: 20px 0 16px 0;
+  font-size: 24px;
+}
+
+.denied-content p {
+  color: #666;
+  margin-bottom: 30px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.denied-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* 顶部导航栏 */
