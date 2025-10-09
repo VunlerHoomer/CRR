@@ -2,7 +2,7 @@ const express = require('express')
 const Registration = require('../../models/Registration')
 const Activity = require('../../models/Activity')
 const User = require('../../models/User')
-const adminAuth = require('../../middleware/adminAuth')
+const { adminAuth } = require('../../middleware/adminAuth')
 
 const router = express.Router()
 

@@ -10,7 +10,7 @@ require('dotenv').config()
 const connectDB = require('./config/database')
 const authRoutes = require('./routes/auth')
 const userRoutes = require('./routes/user')
-const quizRoutes = require('./routes/quiz')
+// const quizRoutes = require('./routes/quiz') // 已删除
 const lotteryRoutes = require('./routes/lottery')
 const rankingRoutes = require('./routes/ranking')
 const errorHandler = require('./middleware/errorHandler')
@@ -55,8 +55,7 @@ app.use(morgan('combined'))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// 限流中间件（暂时使用简单配置）
-const rateLimit = require('express-rate-limit')
+// 限流中间件（使用顶部已导入的rateLimit）
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -67,7 +66,7 @@ app.use('/api/', apiLimiter)
 // 路由（暂时移除缓存中间件）
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
-app.use('/api/quiz', quizRoutes)
+// app.use('/api/quiz', quizRoutes) // 答题路由已删除
 app.use('/api/lottery', lotteryRoutes)
 app.use('/api/ranking', rankingRoutes)
 app.use('/api/registration', require('./routes/registration')) // 报名路由
@@ -75,7 +74,7 @@ app.use('/api/registration', require('./routes/registration')) // 报名路由
 // 管理员路由
 app.use('/api/admin/auth', require('./routes/admin/auth'))
 app.use('/api/admin/dashboard', require('./routes/admin/dashboard'))
-app.use('/api/admin/quiz', require('./routes/admin/quiz'))
+// app.use('/api/admin/quiz', require('./routes/admin/quiz')) // 答题管理已删除
 app.use('/api/admin/lottery', require('./routes/admin/lottery'))
 app.use('/api/admin/users', require('./routes/admin/users'))
 app.use('/api/admin/registration', require('./routes/admin/registration')) // 报名管理路由
