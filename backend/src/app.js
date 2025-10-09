@@ -15,14 +15,15 @@ const lotteryRoutes = require('./routes/lottery')
 const rankingRoutes = require('./routes/ranking')
 const errorHandler = require('./middleware/errorHandler')
 const socketHandler = require('./services/socketHandler')
-const { 
-  enableCompression, 
-  securityHeaders, 
-  cacheMiddleware, 
-  responseTime,
-  apiLimiter,
-  loginLimiter 
-} = require('./middleware/performance')
+// 性能中间件暂时禁用
+// const { 
+//   enableCompression, 
+//   securityHeaders, 
+//   cacheMiddleware, 
+//   responseTime,
+//   apiLimiter,
+//   loginLimiter 
+// } = require('./middleware/performance')
 
 const app = express()
 const server = createServer(app)
@@ -36,10 +37,10 @@ const io = new Server(server, {
 // 连接数据库
 connectDB()
 
-// 性能优化中间件
-app.use(enableCompression) // gzip压缩
-app.use(securityHeaders) // 安全头
-app.use(responseTime) // 响应时间监控
+// 性能优化中间件（暂时禁用以避免部署问题）
+// app.use(enableCompression) // gzip压缩
+// app.use(securityHeaders) // 安全头
+// app.use(responseTime) // 响应时间监控
 
 // 基础中间件 - 简化CORS配置
 app.use(cors({
@@ -54,16 +55,21 @@ app.use(morgan('combined'))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// 限流中间件
+// 限流中间件（暂时使用简单配置）
+const rateLimit = require('express-rate-limit')
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { code: 429, message: '请求过于频繁，请稍后再试' }
+})
 app.use('/api/', apiLimiter)
-app.use('/api/auth/login', loginLimiter)
 
-// 路由（为只读路由添加缓存）
+// 路由（暂时移除缓存中间件）
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
-app.use('/api/quiz', cacheMiddleware(2 * 60 * 1000), quizRoutes) // 2分钟缓存
-app.use('/api/lottery', cacheMiddleware(5 * 60 * 1000), lotteryRoutes) // 5分钟缓存
-app.use('/api/ranking', cacheMiddleware(1 * 60 * 1000), rankingRoutes) // 1分钟缓存
+app.use('/api/quiz', quizRoutes)
+app.use('/api/lottery', lotteryRoutes)
+app.use('/api/ranking', rankingRoutes)
 app.use('/api/registration', require('./routes/registration')) // 报名路由
 
 // 管理员路由
