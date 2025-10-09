@@ -295,30 +295,51 @@ const loadActivities = async () => {
     loading.value = true
     console.log('🔄 开始加载活动数据...')
     
-    // 并行加载新活动和旧活动
-    const [newResponse, oldResponse] = await Promise.all([
-      getActivityList({ type: 'new', limit: 10 }),
-      getActivityList({ type: 'old', limit: 10 })
-    ])
-    
-    console.log('📊 新活动响应:', newResponse)
-    console.log('📊 旧活动响应:', oldResponse)
-    
-    if (newResponse.code === 200) {
-      newActivities.value = newResponse.data.activities || []
-      console.log(`✅ 加载新活动成功: ${newActivities.value.length} 个`)
-    } else {
-      console.error('❌ 获取新活动失败:', newResponse.message)
+    // 分别加载新活动和旧活动，避免并行请求的问题
+    try {
+      console.log('🔄 加载新活动...')
+      const newResponse = await getActivityList({ type: 'new', limit: 10 })
+      console.log('📊 新活动响应:', newResponse)
+      
+      if (newResponse.code === 200) {
+        newActivities.value = newResponse.data.activities || []
+        console.log(`✅ 加载新活动成功: ${newActivities.value.length} 个`)
+        if (newActivities.value.length > 0) {
+          newActivities.value.forEach((activity, index) => {
+            console.log(`  新活动 ${index + 1}: ${activity.title}`)
+          })
+        }
+      } else {
+        console.error('❌ 获取新活动失败:', newResponse.message)
+        newActivities.value = []
+      }
+    } catch (newError) {
+      console.error('❌ 加载新活动出错:', newError)
       newActivities.value = []
     }
     
-    if (oldResponse.code === 200) {
-      oldActivities.value = oldResponse.data.activities || []
-      console.log(`✅ 加载旧活动成功: ${oldActivities.value.length} 个`)
-    } else {
-      console.error('❌ 获取旧活动失败:', oldResponse.message)
+    try {
+      console.log('🔄 加载旧活动...')
+      const oldResponse = await getActivityList({ type: 'old', limit: 10 })
+      console.log('📊 旧活动响应:', oldResponse)
+      
+      if (oldResponse.code === 200) {
+        oldActivities.value = oldResponse.data.activities || []
+        console.log(`✅ 加载旧活动成功: ${oldActivities.value.length} 个`)
+        if (oldActivities.value.length > 0) {
+          oldActivities.value.forEach((activity, index) => {
+            console.log(`  旧活动 ${index + 1}: ${activity.title}`)
+          })
+        }
+      } else {
+        console.error('❌ 获取旧活动失败:', oldResponse.message)
+        oldActivities.value = []
+      }
+    } catch (oldError) {
+      console.error('❌ 加载旧活动出错:', oldError)
       oldActivities.value = []
     }
+    
   } catch (error) {
     console.error('❌ 加载活动数据失败:', error)
     // 设置默认值，避免页面显示异常
@@ -332,6 +353,9 @@ const loadActivities = async () => {
   } finally {
     loading.value = false
     console.log('🏁 活动数据加载完成')
+    console.log('📊 最终数据状态:')
+    console.log(`  新活动: ${newActivities.value.length} 个`)
+    console.log(`  旧活动: ${oldActivities.value.length} 个`)
   }
 }
 
