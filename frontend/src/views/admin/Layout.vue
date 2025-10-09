@@ -25,6 +25,14 @@
                   <el-icon><Document /></el-icon>
                   <span>报名管理</span>
                 </el-menu-item>
+                <el-menu-item index="/admin/area">
+                  <el-icon><Location /></el-icon>
+                  <span>区域管理</span>
+                </el-menu-item>
+                <el-menu-item index="/admin/task">
+                  <el-icon><List /></el-icon>
+                  <span>任务管理</span>
+                </el-menu-item>
                 <el-menu-item index="/admin/team-progress">
                   <el-icon><Trophy /></el-icon>
                   <span>队伍进度</span>
@@ -68,7 +76,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAdminStore } from '@/store/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAvatarText } from '@/utils/avatar'
-import { DataAnalysis, Edit, Present, User, ArrowDown, Document, List, Trophy } from '@element-plus/icons-vue'
+import { DataAnalysis, Edit, Present, User, ArrowDown, Document, List, Trophy, Location } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

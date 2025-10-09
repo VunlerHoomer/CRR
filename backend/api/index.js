@@ -68,6 +68,7 @@ app.use('/api/ranking', require('../src/routes/ranking'))
 app.use('/api/registration', require('../src/routes/registration'))
 app.use('/api/activity', require('../src/routes/activity'))
 app.use('/api/team', require('../src/routes/team'))
+app.use('/api/task', require('../src/routes/task'))
 
 // 管理员路由
 app.use('/api/admin/auth', require('../src/routes/admin/auth'))
@@ -76,6 +77,8 @@ app.use('/api/admin/lottery', require('../src/routes/admin/lottery'))
 app.use('/api/admin/users', require('../src/routes/admin/users'))
 app.use('/api/admin/registration', require('../src/routes/admin/registration'))
 app.use('/api/admin/activity', require('../src/routes/admin/activity'))
+app.use('/api/admin/area', require('../src/routes/admin/area'))
+app.use('/api/admin/task', require('../src/routes/admin/task'))
 
 // 健康检查
 app.get('/api/health', async (req, res) => {

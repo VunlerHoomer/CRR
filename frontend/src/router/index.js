@@ -90,6 +90,18 @@ const routes = [
         meta: { title: '报名管理', requiresAdmin: true }
       },
       {
+        path: 'area',
+        name: 'AdminArea',
+        component: () => import('@/views/admin/Area.vue'),
+        meta: { title: '区域管理', requiresAdmin: true }
+      },
+      {
+        path: 'task',
+        name: 'AdminTask',
+        component: () => import('@/views/admin/Task.vue'),
+        meta: { title: '任务管理', requiresAdmin: true }
+      },
+      {
         path: 'team-progress',
         name: 'AdminTeamProgress',
         component: () => import('@/views/admin/TeamProgress.vue'),

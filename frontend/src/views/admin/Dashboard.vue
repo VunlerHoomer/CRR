@@ -83,7 +83,15 @@
               <el-icon><User /></el-icon>
               <span>管理用户</span>
             </el-button>
-            <el-button type="success" @click="$router.push('/admin/team-progress')">
+            <el-button type="info" @click="$router.push('/admin/area')">
+              <el-icon><Location /></el-icon>
+              <span>区域管理</span>
+            </el-button>
+            <el-button type="success" @click="$router.push('/admin/task')">
+              <el-icon><List /></el-icon>
+              <span>任务管理</span>
+            </el-button>
+            <el-button @click="$router.push('/admin/team-progress')">
               <el-icon><Trophy /></el-icon>
               <span>队伍进度</span>
             </el-button>
