@@ -1,5 +1,5 @@
 <template>
-  <div class="lazy-image-container" :style="{ width, height }">
+  <div ref="containerRef" class="lazy-image-container" :style="{ width, height }">
     <img
       v-if="loaded"
       :src="src"
@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { Loading } from '@element-plus/icons-vue'
 
 const props = defineProps({
@@ -44,6 +44,7 @@ const props = defineProps({
   }
 })
 
+const containerRef = ref(null)
 const loaded = ref(false)
 const loading = ref(false)
 const error = ref(false)
@@ -77,7 +78,11 @@ const loadImage = () => {
   img.src = props.src
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await nextTick() // Ensure DOM is ready
+  
+  if (!containerRef.value) return
+  
   // 使用 Intersection Observer 实现懒加载
   observer.value = new IntersectionObserver(
     (entries) => {
@@ -93,7 +98,7 @@ onMounted(() => {
     }
   )
   
-  observer.value.observe(document.querySelector('.lazy-image-container'))
+  observer.value.observe(containerRef.value)
 })
 
 onUnmounted(() => {
