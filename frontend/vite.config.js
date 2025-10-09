@@ -21,19 +21,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // 生产环境优化
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,  // 移除 console
-        drop_debugger: true,  // 移除 debugger
-        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'], // 移除特定函数调用
-        passes: 2 // 多次压缩优化
-      },
-      mangle: {
-        safari10: true
-      }
-    },
+    // 生产环境优化 - 简化配置避免压缩问题
+    minify: 'esbuild',
     // 代码分割优化
     rollupOptions: {
       output: {
