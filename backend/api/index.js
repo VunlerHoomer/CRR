@@ -2,9 +2,6 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
-const helmet = require('helmet')
-const morgan = require('morgan')
-const { rateLimit } = require('express-rate-limit')
 require('dotenv').config()
 
 // 导入路由
@@ -14,12 +11,6 @@ const lotteryRoutes = require('../src/routes/lottery')
 const rankingRoutes = require('../src/routes/ranking')
 const registrationRoutes = require('../src/routes/registration')
 const errorHandler = require('../src/middleware/errorHandler')
-
-// 性能中间件暂时禁用，避免Vercel部署问题
-// const { 
-//   enableCompression, 
-//   responseTime 
-// } = require('../src/middleware/performance')
 
 // 创建 Express 应用
 const app = express()
@@ -71,26 +62,17 @@ const connectDB = async () => {
 // 初始化数据库连接
 connectDB().catch(err => console.error('初始化数据库连接失败:', err))
 
-// 性能优化中间件（简化以兼容Vercel）
-// app.use(enableCompression) // 暂时禁用，Vercel自带压缩
-// app.use(responseTime) // 暂时禁用，避免部署问题
-
-// 中间件
+// 中间件配置（最简化版本）
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
-// 简化的CORS配置 - 允许所有来源（临时调试）
+
+// CORS配置 - 允许所有来源
 app.use(cors({
-  origin: true, // 允许所有来源
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24小时预检缓存
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }))
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}))
-app.use(morgan('tiny'))
 
 // 确保每次请求都已连接数据库（避免 bufferCommands=false 时查询早于连接）
 app.use(async (req, res, next) => {
@@ -102,16 +84,14 @@ app.use(async (req, res, next) => {
   }
 })
 
-// 限流中间件
+// 限流中间件（简化配置）
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100,
-  message: {
-    code: 429,
-    message: '请求过于频繁，请稍后再试'
-  }
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false
 })
-app.use('/api/', limiter)
+app.use(limiter)
 
 // 路由
 app.use('/api/auth', authRoutes)
