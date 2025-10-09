@@ -25,10 +25,6 @@
                   <el-icon><Document /></el-icon>
                   <span>报名管理</span>
                 </el-menu-item>
-                <el-menu-item index="/admin/tasks">
-                  <el-icon><List /></el-icon>
-                  <span>任务管理</span>
-                </el-menu-item>
                 <el-menu-item index="/admin/team-progress">
                   <el-icon><Trophy /></el-icon>
                   <span>队伍进度</span>
