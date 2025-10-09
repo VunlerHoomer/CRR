@@ -190,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
@@ -223,14 +223,30 @@ const fetchRegistrations = async () => {
       ...filterForm.value
     }
 
+    console.log('📋 获取报名列表:', params)
+
     const response = await adminStore.request.get('/admin/registration/list', { params })
+    console.log('📊 报名列表响应:', response)
+    
     if (response.code === 200) {
       registrations.value = response.data.registrations
       total.value = response.data.pagination.total
+      console.log(`✅ 获取到 ${registrations.value.length} 条报名记录，总计 ${total.value} 条`)
     }
   } catch (error) {
-    console.error('获取报名列表失败:', error)
-    ElMessage.error('获取报名列表失败')
+    console.error('❌ 获取报名列表失败:', error)
+    
+    let errorMessage = '获取报名列表失败'
+    if (error.response?.status === 401) {
+      errorMessage = '管理员权限已过期，请重新登录'
+      adminStore.logout()
+    } else if (error.response?.status === 403) {
+      errorMessage = '没有权限访问报名管理'
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    }
+    
+    ElMessage.error(errorMessage)
   } finally {
     loading.value = false
   }
@@ -404,6 +420,19 @@ const formatDate = (date) => {
 onMounted(() => {
   fetchRegistrations()
   fetchActivities()
+  
+  // 每30秒自动刷新一次报名列表
+  const refreshInterval = setInterval(() => {
+    if (!loading.value) {
+      console.log('🔄 自动刷新报名列表...')
+      fetchRegistrations()
+    }
+  }, 30000)
+  
+  // 组件卸载时清理定时器
+  onUnmounted(() => {
+    clearInterval(refreshInterval)
+  })
 })
 </script>
 

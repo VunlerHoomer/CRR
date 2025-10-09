@@ -251,18 +251,34 @@ const submitRegistration = async () => {
     return
   }
   
+  // 检查用户登录状态
+  if (!userStore.isLoggedIn) {
+    ElMessage.error('请先登录后再报名')
+    router.push('/login')
+    return
+  }
+  
   try {
     await registrationFormRef.value.validate()
     
     registering.value = true
+    
+    console.log('📝 开始报名:', {
+      activityId,
+      user: userStore.user?.username,
+      isLoggedIn: userStore.isLoggedIn,
+      hasToken: !!userStore.token
+    })
     
     const response = await registerActivityAPI({
       activityId: activityId,
       registrationInfo: registrationForm.value
     })
     
+    console.log('✅ 报名API响应:', response)
+    
     if (response.code === 200) {
-      ElMessage.success('报名成功！')
+      ElMessage.success('报名成功！管理员将在后台看到您的报名信息。')
       showRegistrationDialog.value = false
       
       // 重置表单
@@ -270,10 +286,26 @@ const submitRegistration = async () => {
       
       // 刷新报名状态
       await checkRegistrationStatus()
+      
+      console.log('🎉 报名流程完成')
     }
   } catch (error) {
+    console.error('❌ 报名失败:', error)
+    
     if (error.name !== 'ValidationError') {
-      ElMessage.error(error.message || '报名失败，请稍后重试')
+      let errorMessage = '报名失败，请稍后重试'
+      
+      if (error.response?.status === 401) {
+        errorMessage = '登录已过期，请重新登录'
+        userStore.logout()
+        router.push('/login')
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response.data?.message || '报名信息有误'
+      } else if (error.response?.status === 500) {
+        errorMessage = '服务器错误，请稍后重试'
+      }
+      
+      ElMessage.error(errorMessage)
     }
   } finally {
     registering.value = false
