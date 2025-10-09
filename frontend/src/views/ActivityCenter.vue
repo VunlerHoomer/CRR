@@ -11,7 +11,7 @@
       <div class="activity-list">
         <div 
           v-for="activity in newActivities" 
-          :key="activity.id"
+          :key="activity._id"
           class="activity-card"
           @click="enterActivity(activity)"
         >
@@ -52,7 +52,7 @@
       <div class="activity-list">
         <div 
           v-for="activity in oldActivities" 
-          :key="activity.id"
+          :key="activity._id"
           class="activity-card"
           @click="enterActivity(activity)"
         >
@@ -284,17 +284,43 @@ const loadActivities = async () => {
       getActivityList({ type: 'old', limit: 10 })
     ])
     
-    newActivities.value = newResponse.data.activities || []
-    oldActivities.value = oldResponse.data.activities || []
+    if (newResponse.code === 200) {
+      newActivities.value = newResponse.data.activities || []
+    } else {
+      console.error('获取新活动失败:', newResponse.message)
+      newActivities.value = []
+    }
+    
+    if (oldResponse.code === 200) {
+      oldActivities.value = oldResponse.data.activities || []
+    } else {
+      console.error('获取旧活动失败:', oldResponse.message)
+      oldActivities.value = []
+    }
   } catch (error) {
     console.error('加载活动数据失败:', error)
-    ElMessage.error('加载活动数据失败')
+    // 设置默认值，避免页面显示异常
+    newActivities.value = []
+    oldActivities.value = []
+    
+    // 只在网络错误或严重错误时显示错误消息
+    if (error.code === 'NETWORK_ERROR' || error.response?.status >= 500) {
+      ElMessage.error('网络连接失败，请稍后重试')
+    }
   } finally {
     loading.value = false
   }
 }
 
 const loadTeamInfo = async () => {
+  // 只有登录用户才加载队伍信息
+  if (!userStore.isLoggedIn) {
+    teamInfo.value = null
+    teamMembers.value = []
+    invitationCode.value = ''
+    return
+  }
+  
   try {
     const response = await getMyTeam()
     const team = response.data.team
@@ -319,6 +345,9 @@ const loadTeamInfo = async () => {
   } catch (error) {
     console.error('加载队伍信息失败:', error)
     // 不显示错误消息，因为用户可能没有队伍
+    teamInfo.value = null
+    teamMembers.value = []
+    invitationCode.value = ''
   }
 }
 
