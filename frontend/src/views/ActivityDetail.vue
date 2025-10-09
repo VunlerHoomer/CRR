@@ -49,10 +49,10 @@
 
       <div class="activity-actions">
         <el-button 
-          v-if="!activity.registered" 
+          v-if="!registrationInfo.isRegistered" 
           type="primary" 
           size="large"
-          @click="registerActivity"
+          @click="showRegistrationDialog = true"
           :loading="registering"
         >
           立即报名
@@ -72,7 +72,7 @@
 
         <!-- 任务管理入口 - 仅对有权限的用户显示 -->
         <el-button 
-          v-if="canAccessTaskManagement"
+          v-if="registrationInfo.canAccessTaskManagement"
           type="warning" 
           size="large"
           @click="goToTaskManagement"
@@ -80,6 +80,55 @@
           任务管理
         </el-button>
       </div>
+    </div>
+
+    <!-- 报名对话框 -->
+    <el-dialog 
+      v-model="showRegistrationDialog" 
+      title="活动报名" 
+      width="500px"
+    >
+      <el-form 
+        :model="registrationForm" 
+        :rules="registrationRules"
+        ref="registrationFormRef"
+        label-width="100px"
+      >
+        <el-form-item label="真实姓名" prop="realName">
+          <el-input v-model="registrationForm.realName" placeholder="请输入真实姓名" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="registrationForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="学校" prop="school">
+          <el-input v-model="registrationForm.school" placeholder="请输入学校名称" />
+        </el-form-item>
+        <el-form-item label="性别" prop="gender">
+          <el-select v-model="registrationForm.gender" placeholder="请选择性别" style="width: 100%">
+            <el-option label="男" value="male" />
+            <el-option label="女" value="female" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="registrationForm.email" placeholder="请输入邮箱（可选）" />
+        </el-form-item>
+        <el-form-item label="备注" prop="note">
+          <el-input 
+            v-model="registrationForm.note" 
+            type="textarea" 
+            :rows="3"
+            placeholder="其他需要说明的信息（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showRegistrationDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitRegistration" :loading="registering">
+          确认报名
+        </el-button>
+      </template>
+    </el-dialog>
     </div>
   </div>
 </template>
@@ -91,6 +140,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import LazyImage from '@/components/LazyImage.vue'
+import { registerActivity as registerActivityAPI, checkRegistration } from '@/api/registration'
 
 const router = useRouter()
 const route = useRoute()
@@ -106,31 +156,95 @@ const activity = ref({
   location: '上海市徐汇区',
   participants: 45,
   maxParticipants: 150,
-  difficulty: '中等',
-  registered: true
+  difficulty: '中等'
 })
 
 const registering = ref(false)
+const showRegistrationDialog = ref(false)
+const registrationFormRef = ref()
 
-// 计算用户是否有任务管理权限
-const canAccessTaskManagement = computed(() => {
-  return userStore.user?.canAccessTaskManagement || false
+// 报名信息
+const registrationInfo = ref({
+  isRegistered: false,
+  canAccessTaskManagement: false,
+  registration: null
 })
+
+// 报名表单
+const registrationForm = ref({
+  realName: '',
+  phone: '',
+  school: '',
+  gender: '',
+  email: '',
+  note: ''
+})
+
+// 表单验证规则
+const registrationRules = {
+  realName: [
+    { required: true, message: '请输入真实姓名', trigger: 'blur' }
+  ],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  school: [
+    { required: true, message: '请输入学校名称', trigger: 'blur' }
+  ],
+  gender: [
+    { required: true, message: '请选择性别', trigger: 'change' }
+  ]
+}
 
 const goBack = () => {
   router.back()
 }
 
-const registerActivity = async () => {
-  registering.value = true
+// 检查报名状态
+const checkRegistrationStatus = async () => {
   try {
-    // 这里应该调用API进行报名
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    activity.value.registered = true
-    ElMessage.success('报名成功！')
+    const response = await checkRegistration(route.params.id)
+    if (response.code === 200) {
+      registrationInfo.value = {
+        isRegistered: response.data.isRegistered,
+        canAccessTaskManagement: response.data.registration?.canAccessTaskManagement || false,
+        registration: response.data.registration
+      }
+    }
   } catch (error) {
-    ElMessage.error('报名失败，请稍后重试')
+    console.error('检查报名状态失败:', error)
+  }
+}
+
+// 提交报名
+const submitRegistration = async () => {
+  if (!registrationFormRef.value) return
+  
+  try {
+    await registrationFormRef.value.validate()
+    
+    registering.value = true
+    
+    const response = await registerActivityAPI({
+      activityId: route.params.id,
+      registrationInfo: registrationForm.value
+    })
+    
+    if (response.code === 200) {
+      ElMessage.success('报名成功！')
+      showRegistrationDialog.value = false
+      
+      // 重置表单
+      registrationFormRef.value.resetFields()
+      
+      // 刷新报名状态
+      await checkRegistrationStatus()
+    }
+  } catch (error) {
+    if (error.name !== 'ValidationError') {
+      ElMessage.error(error.message || '报名失败，请稍后重试')
+    }
   } finally {
     registering.value = false
   }
@@ -145,10 +259,23 @@ const goToTaskManagement = () => {
   router.push(`/activity/${route.params.id}/tasks`)
 }
 
-onMounted(() => {
+onMounted(async () => {
   // 根据路由参数加载活动详情
   const activityId = route.params.id
   console.log('加载活动详情:', activityId)
+  
+  // 检查报名状态
+  if (userStore.isLoggedIn) {
+    await checkRegistrationStatus()
+  }
+  
+  // 从用户信息中自动填充部分表单
+  if (userStore.user) {
+    registrationForm.value.phone = userStore.user.phone || ''
+    registrationForm.value.school = userStore.user.school || ''
+    registrationForm.value.gender = userStore.user.gender || ''
+    registrationForm.value.email = userStore.user.email || ''
+  }
 })
 </script>
 

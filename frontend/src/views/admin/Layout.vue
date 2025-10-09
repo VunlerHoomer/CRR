@@ -17,18 +17,22 @@
           <el-icon><Present /></el-icon>
           <span>抽签管理</span>
         </el-menu-item>
-        <el-menu-item index="/admin/users">
-          <el-icon><User /></el-icon>
-          <span>用户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/admin/tasks">
-          <el-icon><List /></el-icon>
-          <span>任务管理</span>
-        </el-menu-item>
-        <el-menu-item index="/admin/team-progress">
-          <el-icon><Trophy /></el-icon>
-          <span>队伍进度</span>
-        </el-menu-item>
+                <el-menu-item index="/admin/users">
+                  <el-icon><User /></el-icon>
+                  <span>用户管理</span>
+                </el-menu-item>
+                <el-menu-item index="/admin/registration">
+                  <el-icon><Document /></el-icon>
+                  <span>报名管理</span>
+                </el-menu-item>
+                <el-menu-item index="/admin/tasks">
+                  <el-icon><List /></el-icon>
+                  <span>任务管理</span>
+                </el-menu-item>
+                <el-menu-item index="/admin/team-progress">
+                  <el-icon><Trophy /></el-icon>
+                  <span>队伍进度</span>
+                </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -67,7 +71,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminStore } from '@/store/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataAnalysis, Edit, Present, User, ArrowDown } from '@element-plus/icons-vue'
+import { DataAnalysis, Edit, Present, User, ArrowDown, Document, List, Trophy } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

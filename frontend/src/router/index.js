@@ -90,6 +90,12 @@ const routes = [
         meta: { title: '用户管理', requiresAdmin: true }
       },
       {
+        path: 'registration',
+        name: 'AdminRegistration',
+        component: () => import('@/views/admin/Registration.vue'),
+        meta: { title: '报名管理', requiresAdmin: true }
+      },
+      {
         path: 'tasks',
         name: 'AdminTasks',
         component: () => import('@/views/admin/Tasks.vue'),

@@ -60,6 +60,7 @@ app.use('/api/user', userRoutes)
 app.use('/api/quiz', cacheMiddleware(2 * 60 * 1000), quizRoutes) // 2分钟缓存
 app.use('/api/lottery', cacheMiddleware(5 * 60 * 1000), lotteryRoutes) // 5分钟缓存
 app.use('/api/ranking', cacheMiddleware(1 * 60 * 1000), rankingRoutes) // 1分钟缓存
+app.use('/api/registration', require('./routes/registration')) // 报名路由
 
 // 管理员路由
 app.use('/api/admin/auth', require('./routes/admin/auth'))
@@ -67,6 +68,7 @@ app.use('/api/admin/dashboard', require('./routes/admin/dashboard'))
 app.use('/api/admin/quiz', require('./routes/admin/quiz'))
 app.use('/api/admin/lottery', require('./routes/admin/lottery'))
 app.use('/api/admin/users', require('./routes/admin/users'))
+app.use('/api/admin/registration', require('./routes/admin/registration')) // 报名管理路由
 
 // 健康检查
 app.get('/api/health', (req, res) => {
