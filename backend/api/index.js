@@ -12,7 +12,14 @@ const authRoutes = require('../src/routes/auth')
 const userRoutes = require('../src/routes/user')
 const lotteryRoutes = require('../src/routes/lottery')
 const rankingRoutes = require('../src/routes/ranking')
+const registrationRoutes = require('../src/routes/registration')
 const errorHandler = require('../src/middleware/errorHandler')
+
+// 导入性能中间件
+const { 
+  enableCompression, 
+  responseTime 
+} = require('../src/middleware/performance')
 
 // 创建 Express 应用
 const app = express()
@@ -63,6 +70,10 @@ const connectDB = async () => {
 
 // 初始化数据库连接
 connectDB().catch(err => console.error('初始化数据库连接失败:', err))
+
+// 性能优化中间件
+app.use(enableCompression) // gzip压缩
+app.use(responseTime) // 响应时间监控
 
 // 中间件
 app.use(express.json({ limit: '10mb' }))
@@ -145,6 +156,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/lottery', lotteryRoutes)
 app.use('/api/ranking', rankingRoutes)
+app.use('/api/registration', registrationRoutes) // 报名路由
 
 // 用户端任务路由（测试版本）
 app.use('/api/task', require('../src/routes/task'))
@@ -160,8 +172,8 @@ app.use('/api/admin/auth', require('../src/routes/admin/auth'))
 app.use('/api/admin/dashboard', require('../src/routes/admin/dashboard'))
 app.use('/api/admin/lottery', require('../src/routes/admin/lottery'))
 app.use('/api/admin/users', require('../src/routes/admin/users'))
-// 临时注释掉任务管理路由，避免部署错误
-// app.use('/api/admin/tasks', require('../src/routes/admin/tasks'))
+app.use('/api/admin/registration', require('../src/routes/admin/registration')) // 报名管理路由
+app.use('/api/admin/tasks', require('../src/routes/admin/tasks')) // 任务管理路由
 
 // 健康检查
 app.get('/api/health', async (req, res) => {
