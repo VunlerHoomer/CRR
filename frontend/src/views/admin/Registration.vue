@@ -255,16 +255,36 @@ const fetchRegistrations = async () => {
 // 获取活动列表
 const fetchActivities = async () => {
   try {
-    // 使用活动API获取所有活动（不分页）
-    const response = await adminStore.request.get('/activity/list', {
+    console.log('📋 获取活动列表...')
+    
+    // 使用管理员专用的活动API
+    const response = await adminStore.request.get('/admin/activity/list', {
       params: { limit: 100 }
     })
+    
+    console.log('📊 活动列表响应:', response)
+    
     if (response.code === 200) {
       activities.value = response.data.activities || []
+      console.log(`✅ 获取到 ${activities.value.length} 个活动`)
+    } else {
+      console.error('❌ 活动列表API返回错误:', response.message)
+      activities.value = []
     }
   } catch (error) {
-    console.error('获取活动列表失败:', error)
-    // 如果失败，使用空数组
+    console.error('❌ 获取活动列表失败:', error)
+    
+    let errorMessage = '获取活动列表失败'
+    if (error.response?.status === 401) {
+      errorMessage = '管理员权限已过期，请重新登录'
+      adminStore.logout()
+    } else if (error.response?.status === 403) {
+      errorMessage = '没有权限访问活动列表'
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    }
+    
+    console.error('详细错误:', errorMessage)
     activities.value = []
   }
 }

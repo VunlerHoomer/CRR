@@ -77,6 +77,7 @@ app.use('/api/admin/lottery', require('../src/routes/admin/lottery'))
 app.use('/api/admin/users', require('../src/routes/admin/users'))
 app.use('/api/admin/registration', require('../src/routes/admin/registration'))
 app.use('/api/admin/tasks', require('../src/routes/admin/tasks'))
+app.use('/api/admin/activity', require('../src/routes/admin/activity'))
 
 // 健康检查
 app.get('/api/health', async (req, res) => {
