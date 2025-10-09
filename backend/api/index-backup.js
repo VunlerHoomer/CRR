@@ -46,23 +46,17 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }))
 
-// 确保数据库连接 - 非阻塞版本
+// 确保数据库连接
 app.use(async (req, res, next) => {
   try {
     await connectDB()
     next()
   } catch (err) {
-    console.error('数据库连接错误:', err.message)
-    // 对于某些路由，允许在没有数据库的情况下继续
-    if (req.path === '/api/health' || req.path === '/') {
-      next()
-    } else {
-      res.status(500).json({ 
-        code: 500, 
-        message: '数据库连接失败', 
-        detail: err.message 
-      })
-    }
+    res.status(500).json({ 
+      code: 500, 
+      message: '数据库连接失败', 
+      detail: err.message 
+    })
   }
 })
 
@@ -74,13 +68,7 @@ app.use('/api/ranking', require('../src/routes/ranking'))
 app.use('/api/registration', require('../src/routes/registration'))
 app.use('/api/activity', require('../src/routes/activity'))
 app.use('/api/team', require('../src/routes/team'))
-
-// 尝试注册任务路由
-try {
-  app.use('/api/task', require('../src/routes/task'))
-} catch (error) {
-  console.error('⚠️ 任务路由注册失败:', error.message)
-}
+app.use('/api/task', require('../src/routes/task'))
 
 // 管理员路由
 app.use('/api/admin/auth', require('../src/routes/admin/auth'))
@@ -89,14 +77,8 @@ app.use('/api/admin/lottery', require('../src/routes/admin/lottery'))
 app.use('/api/admin/users', require('../src/routes/admin/users'))
 app.use('/api/admin/registration', require('../src/routes/admin/registration'))
 app.use('/api/admin/activity', require('../src/routes/admin/activity'))
-
-// 尝试注册新的管理员路由
-try {
-  app.use('/api/admin/area', require('../src/routes/admin/area'))
-  app.use('/api/admin/task', require('../src/routes/admin/task'))
-} catch (error) {
-  console.error('⚠️ 管理员路由注册失败:', error.message)
-}
+app.use('/api/admin/area', require('../src/routes/admin/area'))
+app.use('/api/admin/task', require('../src/routes/admin/task'))
 
 // 健康检查
 app.get('/api/health', async (req, res) => {

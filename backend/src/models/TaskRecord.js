@@ -180,8 +180,8 @@ taskRecordSchema.statics.getUserStats = async function(userId, activityId) {
   const stats = await this.aggregate([
     {
       $match: {
-        user: mongoose.Types.ObjectId(userId),
-        activity: mongoose.Types.ObjectId(activityId)
+        user: new mongoose.Types.ObjectId(userId),
+        activity: new mongoose.Types.ObjectId(activityId)
       }
     },
     {
