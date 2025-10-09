@@ -203,9 +203,9 @@ const fetchActivityDetail = async () => {
     loading.value = true
     const activityId = route.params.id
     
-    if (!activityId) {
-      ElMessage.error('活动ID不存在')
-      router.back()
+    if (!activityId || activityId === 'undefined' || activityId === 'null') {
+      ElMessage.error('活动ID无效')
+      router.push('/activity-center')
       return
     }
     
@@ -216,7 +216,7 @@ const fetchActivityDetail = async () => {
   } catch (error) {
     console.error('获取活动详情失败:', error)
     ElMessage.error('获取活动详情失败')
-    router.back()
+    router.push('/activity-center')
   } finally {
     loading.value = false
   }
@@ -226,7 +226,7 @@ const fetchActivityDetail = async () => {
 const checkRegistrationStatus = async () => {
   try {
     const activityId = route.params.id
-    if (!activityId) return
+    if (!activityId || activityId === 'undefined' || activityId === 'null') return
     
     const response = await checkRegistration(activityId)
     if (response.code === 200) {
@@ -245,13 +245,19 @@ const checkRegistrationStatus = async () => {
 const submitRegistration = async () => {
   if (!registrationFormRef.value) return
   
+  const activityId = route.params.id
+  if (!activityId || activityId === 'undefined' || activityId === 'null') {
+    ElMessage.error('活动ID无效')
+    return
+  }
+  
   try {
     await registrationFormRef.value.validate()
     
     registering.value = true
     
     const response = await registerActivityAPI({
-      activityId: route.params.id,
+      activityId: activityId,
       registrationInfo: registrationForm.value
     })
     

@@ -190,7 +190,7 @@ const joining = ref(false)
 const enterActivity = (activity) => {
   ElMessage.info(`进入活动: ${activity.title}`)
   // 这里可以跳转到具体的活动页面
-  router.push(`/activity/${activity.id}`)
+  router.push(`/activity/${activity._id}`)
 }
 
 const generateInvitationCode = async () => {
