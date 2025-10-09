@@ -224,11 +224,12 @@ const fetchRegistrations = async () => {
     }
 
     const response = await adminStore.request.get('/admin/registration/list', { params })
-    if (response.data.code === 200) {
-      registrations.value = response.data.data.registrations
-      total.value = response.data.data.pagination.total
+    if (response.code === 200) {
+      registrations.value = response.data.registrations
+      total.value = response.data.pagination.total
     }
   } catch (error) {
+    console.error('获取报名列表失败:', error)
     ElMessage.error('获取报名列表失败')
   } finally {
     loading.value = false
@@ -238,12 +239,17 @@ const fetchRegistrations = async () => {
 // 获取活动列表
 const fetchActivities = async () => {
   try {
-    const response = await adminStore.request.get('/admin/dashboard/activities')
-    if (response.data.code === 200) {
-      activities.value = response.data.data.activities || []
+    // 使用活动API获取所有活动（不分页）
+    const response = await adminStore.request.get('/activity/list', {
+      params: { limit: 100 }
+    })
+    if (response.code === 200) {
+      activities.value = response.data.activities || []
     }
   } catch (error) {
     console.error('获取活动列表失败:', error)
+    // 如果失败，使用空数组
+    activities.value = []
   }
 }
 
@@ -265,7 +271,7 @@ const reviewRegistration = async (registration, status) => {
       note: note || ''
     })
 
-    if (response.data.code === 200) {
+    if (response.code === 200) {
       ElMessage.success('审核成功')
       fetchRegistrations()
     }
@@ -297,7 +303,7 @@ const batchReview = async (status) => {
       note: note || ''
     })
 
-    if (response.data.code === 200) {
+    if (response.code === 200) {
       ElMessage.success('批量审核成功')
       selectedRegistrations.value = []
       fetchRegistrations()
@@ -317,7 +323,7 @@ const updateTaskPermission = async (registration) => {
       { canAccessTaskManagement: registration.canAccessTaskManagement }
     )
 
-    if (response.data.code === 200) {
+    if (response.code === 200) {
       ElMessage.success('权限更新成功')
     }
   } catch (error) {
@@ -337,7 +343,7 @@ const checkIn = async (registration) => {
 
     const response = await adminStore.request.put(`/admin/registration/${registration._id}/check-in`)
 
-    if (response.data.code === 200) {
+    if (response.code === 200) {
       ElMessage.success('签到成功')
       fetchRegistrations()
     }
@@ -352,11 +358,12 @@ const checkIn = async (registration) => {
 const viewDetail = async (registration) => {
   try {
     const response = await adminStore.request.get(`/admin/registration/${registration._id}`)
-    if (response.data.code === 200) {
-      currentRegistration.value = response.data.data.registration
+    if (response.code === 200) {
+      currentRegistration.value = response.data.registration
       detailDialogVisible.value = true
     }
   } catch (error) {
+    console.error('获取详情失败:', error)
     ElMessage.error('获取详情失败')
   }
 }
