@@ -137,28 +137,15 @@ const loginLimiter = createRateLimit(15 * 60 * 1000, 5) // 15分钟内最多5次
 // 上传限流
 const uploadLimiter = createRateLimit(60 * 1000, 10) // 1分钟内最多10次上传
 
+// 暂时导出空对象，避免Vercel部署问题
 module.exports = {
-  enableCompression,
-  securityHeaders,
-  cacheMiddleware,
-  responseTime,
-  apiLimiter,
-  loginLimiter,
-  uploadLimiter,
-  // 缓存管理方法
-  clearCache: (pattern) => {
-    if (pattern) {
-      for (const key of requestCache.keys()) {
-        if (key.includes(pattern)) {
-          requestCache.delete(key)
-        }
-      }
-    } else {
-      requestCache.clear()
-    }
-  },
-  getCacheStats: () => ({
-    size: requestCache.size,
-    keys: Array.from(requestCache.keys())
-  })
+  enableCompression: (req, res, next) => next(),
+  securityHeaders: (req, res, next) => next(),
+  cacheMiddleware: () => (req, res, next) => next(),
+  responseTime: (req, res, next) => next(),
+  apiLimiter: (req, res, next) => next(),
+  loginLimiter: (req, res, next) => next(),
+  uploadLimiter: (req, res, next) => next(),
+  clearCache: () => {},
+  getCacheStats: () => ({ size: 0, keys: [] })
 }
