@@ -4,10 +4,10 @@
       <div class="profile-header">
         <div class="user-info">
           <el-avatar :size="80" :src="user?.avatar">
-            {{ user?.nickname?.charAt(0) }}
+            {{ getAvatarText(user) }}
           </el-avatar>
           <div class="user-details">
-            <h2>{{ user?.nickname || '用户' }}</h2>
+            <h2>{{ getUserDisplayName(user) }}</h2>
             <p>{{ user?.phone || '未绑定手机号' }}</p>
             <p v-if="user?.school">学校：{{ user.school }}</p>
             <p v-if="user?.gender">性别：{{ genderText(user.gender) }}</p>
@@ -167,6 +167,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
 import { Trophy, Star, TrophyBase, Aim, Plus } from '@element-plus/icons-vue'
+import { getAvatarText, getUserDisplayName } from '@/utils/avatar'
 
 const userStore = useUserStore()
 

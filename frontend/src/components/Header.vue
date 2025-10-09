@@ -25,9 +25,9 @@
           <el-dropdown @command="handleUserCommand">
             <span class="user-info">
               <el-avatar :size="32" :src="user?.avatar">
-                {{ user?.nickname?.charAt(0) }}
+                {{ getAvatarText(user) }}
               </el-avatar>
-              <span class="username">{{ user?.nickname || '用户' }}</span>
+              <span class="username">{{ getUserDisplayName(user) }}</span>
               <el-icon><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
@@ -52,6 +52,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
+import { getAvatarText, getUserDisplayName } from '@/utils/avatar'
 
 const route = useRoute()
 const router = useRouter()

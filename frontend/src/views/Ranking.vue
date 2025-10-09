@@ -28,7 +28,7 @@
                   
                   <div class="user-info">
                     <el-avatar :size="40" :src="user.avatar">
-                      {{ user.nickname?.charAt(0) }}
+                      {{ getAvatarText(user) }}
                     </el-avatar>
                     <div class="user-details">
                       <h4>{{ user.nickname }}</h4>
@@ -71,7 +71,7 @@
                   
                   <div class="user-info">
                     <el-avatar :size="40" :src="user.avatar">
-                      {{ user.nickname?.charAt(0) }}
+                      {{ getAvatarText(user) }}
                     </el-avatar>
                     <div class="user-details">
                       <h4>{{ user.nickname }}</h4>
@@ -114,7 +114,7 @@
                   
                   <div class="user-info">
                     <el-avatar :size="40" :src="user.avatar">
-                      {{ user.nickname?.charAt(0) }}
+                      {{ getAvatarText(user) }}
                     </el-avatar>
                     <div class="user-details">
                       <h4>{{ user.nickname }}</h4>
@@ -177,6 +177,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Trophy, Medal, Star, Refresh } from '@element-plus/icons-vue'
+import { getAvatarText } from '@/utils/avatar'
 
 const activeTab = ref('points')
 

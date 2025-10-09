@@ -44,7 +44,7 @@
         <div class="header-right">
           <el-dropdown @command="handleCommand">
             <span class="admin-info">
-              <el-avatar :size="32">{{ adminStore.admin?.username?.charAt(0) }}</el-avatar>
+              <el-avatar :size="32">{{ getAvatarText(adminStore.admin) || 'A' }}</el-avatar>
               <span class="admin-name">{{ adminStore.admin?.username }}</span>
               <el-icon><ArrowDown /></el-icon>
             </span>
@@ -71,6 +71,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminStore } from '@/store/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getAvatarText } from '@/utils/avatar'
 import { DataAnalysis, Edit, Present, User, ArrowDown, Document, List, Trophy } from '@element-plus/icons-vue'
 
 const route = useRoute()
