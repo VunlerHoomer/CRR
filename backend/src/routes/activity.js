@@ -7,6 +7,31 @@ const { body, validationResult } = require('express-validator')
 const auth = require('../middleware/auth')
 
 
+// 删除旧活动
+router.delete('/old', async (req, res) => {
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    
+    const result = await Activity.deleteMany({
+      startTime: { $lt: thirtyDaysAgo }
+    })
+    
+    res.json({
+      code: 200,
+      message: '删除成功',
+      data: {
+        deletedCount: result.deletedCount
+      }
+    })
+  } catch (error) {
+    console.error('删除旧活动失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: error.message || '删除旧活动失败'
+    })
+  }
+})
+
 // 初始化活动数据
 router.post('/init', async (req, res) => {
   try {
