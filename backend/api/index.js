@@ -78,64 +78,14 @@ app.use(responseTime) // 响应时间监控
 // 中间件
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
+// 简化的CORS配置 - 允许所有来源（临时调试）
 app.use(cors({
-  origin: function (origin, callback) {
-    // 允许的域名列表
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'https://localhost:3000',
-      'https://crr-frontend.vercel.app',
-      'https://szcityrunride.com',
-      'https://www.szcityrunride.com',
-      process.env.FRONTEND_URL
-    ].filter(Boolean)
-    
-    // 允许的域名模式
-    const allowedPatterns = [
-      /\.edgeone\.app$/,
-      /\.edgeone\.run$/,
-      /\.vercel\.app$/,
-      /^https?:\/\/.*\.vercel\.app$/,
-      /^https?:\/\/crr-frontend.*\.vercel\.app$/,
-      /^https?:\/\/cityrunride-.*\.edgeone\.run$/
-    ]
-    
-    // 如果没有 origin（同源请求或某些工具），允许
-    if (!origin) {
-      return callback(null, true)
-    }
-    
-    // 打印调试信息（仅在非生产环境）
-    console.log('CORS Request from:', origin)
-    
-    // 检查是否在允许列表中
-    if (allowedOrigins.includes(origin)) {
-      console.log('✅ Origin allowed (exact match):', origin)
-      return callback(null, true)
-    }
-    
-    // 检查是否匹配允许的模式
-    for (const pattern of allowedPatterns) {
-      if (pattern.test(origin)) {
-        console.log('✅ Origin allowed (pattern match):', origin, pattern)
-        return callback(null, true)
-      }
-    }
-    
-    // 开发环境允许所有
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('✅ Origin allowed (dev mode):', origin)
-      return callback(null, true)
-    }
-    
-    // 其他情况拒绝
-    console.log('❌ Origin blocked:', origin)
-    callback(new Error('Not allowed by CORS'))
-  },
+  origin: true, // 允许所有来源
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // 24小时预检缓存
 }))
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
