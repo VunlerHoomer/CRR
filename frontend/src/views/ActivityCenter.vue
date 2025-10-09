@@ -8,7 +8,14 @@
     <!-- 新活动板块 -->
     <div class="activity-section">
       <h2 class="section-title">新活动</h2>
-      <div class="activity-list">
+      <div v-if="loading" class="loading-container">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="newActivities.length === 0" class="empty-container">
+        <el-empty description="暂无新活动" />
+      </div>
+      <div v-else class="activity-list">
         <div 
           v-for="activity in newActivities" 
           :key="activity._id"
@@ -49,7 +56,14 @@
         旧活动
         <el-icon class="info-icon"><InfoFilled /></el-icon>
       </h2>
-      <div class="activity-list">
+      <div v-if="loading" class="loading-container">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="oldActivities.length === 0" class="empty-container">
+        <el-empty description="暂无旧活动" />
+      </div>
+      <div v-else class="activity-list">
         <div 
           v-for="activity in oldActivities" 
           :key="activity._id"
@@ -167,11 +181,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowRight, InfoFilled, User, ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowRight, InfoFilled, User, ArrowLeft, Loading } from '@element-plus/icons-vue'
 import { getActivityList } from '@/api/activity'
 import { getMyTeam, generateInvitationCode as generateInvitationCodeAPI, joinTeamByCode, leaveTeam as leaveTeamAPI } from '@/api/team'
+import { useUserStore } from '@/store/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 // 响应式数据
 const newActivities = ref([])
@@ -277,6 +293,7 @@ const openActivityNav = () => {
 const loadActivities = async () => {
   try {
     loading.value = true
+    console.log('🔄 开始加载活动数据...')
     
     // 并行加载新活动和旧活动
     const [newResponse, oldResponse] = await Promise.all([
@@ -284,21 +301,26 @@ const loadActivities = async () => {
       getActivityList({ type: 'old', limit: 10 })
     ])
     
+    console.log('📊 新活动响应:', newResponse)
+    console.log('📊 旧活动响应:', oldResponse)
+    
     if (newResponse.code === 200) {
       newActivities.value = newResponse.data.activities || []
+      console.log(`✅ 加载新活动成功: ${newActivities.value.length} 个`)
     } else {
-      console.error('获取新活动失败:', newResponse.message)
+      console.error('❌ 获取新活动失败:', newResponse.message)
       newActivities.value = []
     }
     
     if (oldResponse.code === 200) {
       oldActivities.value = oldResponse.data.activities || []
+      console.log(`✅ 加载旧活动成功: ${oldActivities.value.length} 个`)
     } else {
-      console.error('获取旧活动失败:', oldResponse.message)
+      console.error('❌ 获取旧活动失败:', oldResponse.message)
       oldActivities.value = []
     }
   } catch (error) {
-    console.error('加载活动数据失败:', error)
+    console.error('❌ 加载活动数据失败:', error)
     // 设置默认值，避免页面显示异常
     newActivities.value = []
     oldActivities.value = []
@@ -309,6 +331,7 @@ const loadActivities = async () => {
     }
   } finally {
     loading.value = false
+    console.log('🏁 活动数据加载完成')
   }
 }
 
