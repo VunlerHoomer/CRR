@@ -20,9 +20,15 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
+    console.log('🔍 请求拦截器 - 原始config:', {
+      method: config.method,
+      url: config.url,
+      hasMethod: !!config.method
+    })
+    
     // 确保config.method存在
     if (!config.method) {
-      console.error('请求配置缺少method字段:', config)
+      console.error('❌ 请求配置缺少method字段:', config)
       return Promise.reject(new Error('请求配置错误：缺少method字段'))
     }
     
@@ -39,25 +45,31 @@ request.interceptors.request.use(
     // 记录请求开始时间
     config.startTime = Date.now()
     
-    // 检查缓存
-    if (config.method === 'get' && !config.skipCache) {
-      const cached = requestCache.get(cacheKey)
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        // 返回一个模拟的axios响应对象，保持config完整性
-        return Promise.resolve({
-          data: cached.response,
-          status: 200,
-          statusText: 'OK',
-          headers: {},
-          config: config,
-          request: {}
-        })
-      }
-    }
+    // 暂时禁用缓存功能以排查问题
+    // if (config.method === 'get' && !config.skipCache) {
+    //   const cached = requestCache.get(cacheKey)
+    //   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    //     console.log('📦 返回缓存数据:', cacheKey)
+    //     // 返回一个模拟的axios响应对象，保持config完整性
+    //     return Promise.resolve({
+    //       data: cached.response,
+    //       status: 200,
+    //       statusText: 'OK',
+    //       headers: {},
+    //       config: config,
+    //       request: {}
+    //     })
+    //   }
+    // }
     
+    console.log('✅ 请求拦截器 - 返回config:', {
+      method: config.method,
+      url: config.url
+    })
     return config
   },
   (error) => {
+    console.error('❌ 请求拦截器错误:', error)
     return Promise.reject(error)
   }
 )
