@@ -426,26 +426,40 @@ const checkTaskPermission = async () => {
 // 获取区域列表
 const fetchAreas = async () => {
   try {
+    // 确保activityId有效
+    if (!activityId.value || activityId.value === 'undefined' || activityId.value === 'null') {
+      throw new Error('活动ID无效')
+    }
+    
+    console.log('🔄 获取区域列表，活动ID:', activityId.value)
     const response = await getActivityAreas(activityId.value)
     if (response.code === 200) {
       areas.value = response.data.areas
+      console.log('✅ 区域列表获取成功:', areas.value.length)
     }
   } catch (error) {
-    console.error('获取区域列表失败:', error)
-    ElMessage.error('获取区域列表失败')
+    console.error('❌ 获取区域列表失败:', error)
+    ElMessage.error('获取区域列表失败: ' + error.message)
   }
 }
 
 // 获取用户进度
 const fetchUserProgress = async () => {
   try {
+    // 确保activityId有效
+    if (!activityId.value || activityId.value === 'undefined' || activityId.value === 'null') {
+      throw new Error('活动ID无效')
+    }
+    
+    console.log('🔄 获取用户进度，活动ID:', activityId.value)
     const response = await getUserProgress(activityId.value)
     if (response.code === 200) {
       userStats.value = response.data.stats
       areaProgress.value = response.data.areaProgress
+      console.log('✅ 用户进度获取成功:', userStats.value)
     }
   } catch (error) {
-    console.error('获取用户进度失败:', error)
+    console.error('❌ 获取用户进度失败:', error)
   }
 }
 
@@ -619,6 +633,10 @@ const getDifficultyType = (difficulty) => {
 
 onMounted(async () => {
   try {
+    console.log('📋 开始加载任务管理页面...')
+    console.log('🔍 路由参数:', route.params)
+    console.log('🔍 活动ID:', activityId.value, '类型:', typeof activityId.value)
+    
     // 检查任务管理权限
     await checkTaskPermission()
     
