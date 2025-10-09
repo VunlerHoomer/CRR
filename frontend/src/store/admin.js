@@ -10,8 +10,15 @@ const adminRequest = axios.create({
 // 请求拦截器
 adminRequest.interceptors.request.use(
   (config) => {
+    // 确保config.method存在
+    if (!config.method) {
+      console.error('请求配置缺少method字段:', config)
+      return Promise.reject(new Error('请求配置错误：缺少method字段'))
+    }
+    
     const token = localStorage.getItem('adminToken')
     if (token) {
+      config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${token}`
     }
     return config

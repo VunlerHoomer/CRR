@@ -20,8 +20,15 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
+    // 确保config.method存在
+    if (!config.method) {
+      console.error('请求配置缺少method字段:', config)
+      return Promise.reject(new Error('请求配置错误：缺少method字段'))
+    }
+    
     const userStore = useUserStore()
     if (userStore.token) {
+      config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${userStore.token}`
     }
     
@@ -36,7 +43,15 @@ request.interceptors.request.use(
     if (config.method === 'get' && !config.skipCache) {
       const cached = requestCache.get(cacheKey)
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        return Promise.resolve(cached.response)
+        // 返回一个模拟的axios响应对象，保持config完整性
+        return Promise.resolve({
+          data: cached.response,
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config: config,
+          request: {}
+        })
       }
     }
     
