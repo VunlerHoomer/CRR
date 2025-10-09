@@ -1,6 +1,6 @@
 {
   "name": "quiz-lottery-frontend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "答题抽签互动网站前端",
   "scripts": {
     "dev": "vite",
