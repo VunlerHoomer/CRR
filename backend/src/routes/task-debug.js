@@ -1,4 +1,5 @@
 const express = require('express')
+const mongoose = require('mongoose')
 const router = express.Router()
 
 // 最简单的测试路由，不需要认证
@@ -10,29 +11,44 @@ router.get('/test', (req, res) => {
   })
 })
 
-// 获取活动区域列表 - 调试版本
-router.get('/areas/:activityId', (req, res) => {
+// 获取活动区域列表 - 从数据库获取真实数据
+router.get('/areas/:activityId', async (req, res) => {
   try {
     const { activityId } = req.params
     
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接'
+      })
+    }
+
+    const Area = require('../models/Area')
+    const areas = await Area.find({ 
+      activity: activityId,
+      isActive: true 
+    }).sort({ order: 1 })
+
+    // 转换为前端需要的格式
+    const formattedAreas = areas.map(area => ({
+      _id: area._id,
+      name: area.name,
+      description: area.description,
+      order: area.order,
+      progress: {
+        completed: 0, // 暂时设为0，后续可以计算真实进度
+        total: 3,     // 暂时设为3，后续可以计算真实任务数
+        percentage: 0,
+        isCompleted: false
+      }
+    }))
+
     res.json({
       code: 200,
       message: '获取成功',
       data: { 
-        areas: [
-          {
-            _id: 'debug-area-1',
-            name: '调试区域1',
-            description: '这是一个调试区域',
-            order: 1,
-            progress: {
-              completed: 0,
-              total: 3,
-              percentage: 0,
-              isCompleted: false
-            }
-          }
-        ]
+        areas: formattedAreas
       }
     })
   } catch (error) {
