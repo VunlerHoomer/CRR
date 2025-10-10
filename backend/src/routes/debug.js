@@ -1,11 +1,20 @@
 const express = require('express')
+const mongoose = require('mongoose')
 const router = express.Router()
-const Area = require('../models/Area')
-const Activity = require('../models/Activity')
 
 // 调试路由 - 查看数据库状态
 router.get('/areas', async (req, res) => {
   try {
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接',
+        connectionState: mongoose.connection.readyState
+      })
+    }
+
+    const Area = require('../models/Area')
     const areas = await Area.find().populate('activity', 'title')
     res.json({
       code: 200,
@@ -26,6 +35,16 @@ router.get('/areas', async (req, res) => {
 
 router.get('/activities', async (req, res) => {
   try {
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接',
+        connectionState: mongoose.connection.readyState
+      })
+    }
+
+    const Activity = require('../models/Activity')
     const activities = await Activity.find()
     res.json({
       code: 200,
