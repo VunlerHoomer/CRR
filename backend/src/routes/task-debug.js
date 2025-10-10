@@ -87,4 +87,61 @@ router.get('/progress/:activityId', (req, res) => {
   }
 })
 
+// 获取区域任务列表
+router.get('/area/:areaId/tasks', async (req, res) => {
+  try {
+    const { areaId } = req.params
+    
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接'
+      })
+    }
+
+    // 暂时返回模拟的任务数据
+    // 后续可以从数据库中的Task模型获取真实数据
+    const mockTasks = [
+      {
+        _id: 'task-1',
+        area: areaId,
+        type: 'choice',
+        question: '这是一个测试选择题',
+        description: '请选择正确答案',
+        options: ['选项A', '选项B', '选项C', '选项D'],
+        answer: '选项A',
+        points: 10,
+        order: 1,
+        isActive: true
+      },
+      {
+        _id: 'task-2',
+        area: areaId,
+        type: 'text',
+        question: '这是一个测试填空题',
+        description: '请填写正确答案',
+        answer: '正确答案',
+        points: 15,
+        order: 2,
+        isActive: true
+      }
+    ]
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: { 
+        tasks: mockTasks
+      }
+    })
+  } catch (error) {
+    console.error('获取区域任务失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: error.message || '获取区域任务失败'
+    })
+  }
+})
+
 module.exports = router
