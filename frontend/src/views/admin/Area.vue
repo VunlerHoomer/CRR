@@ -270,7 +270,7 @@ const loadAreas = async () => {
     }
 
     console.log('🔄 正在获取区域列表，参数:', params)
-    const response = await adminStore.request.get('/api/admin/area/list', { params })
+    const response = await adminStore.request.get('/admin/area/list', { params })
 
     if (response.code === 200) {
       areas.value = response.data.areas
@@ -295,7 +295,7 @@ const loadAreas = async () => {
 const loadActivities = async () => {
   try {
     // 使用用户API获取活动列表，因为管理员需要查看所有活动
-    const response = await adminStore.request.get('/api/activity/list', { params: { limit: 100 } })
+    const response = await adminStore.request.get('/activity/list', { params: { limit: 100 } })
 
     if (response.code === 200) {
       activities.value = response.data.activities
@@ -346,9 +346,9 @@ const handleSubmit = async () => {
 
     let response
     if (dialogMode.value === 'create') {
-      response = await adminStore.request.post('/api/admin/area', areaForm)
+      response = await adminStore.request.post('/admin/area', areaForm)
     } else {
-      response = await adminStore.request.put(`/api/admin/area/${currentArea.value._id}`, areaForm)
+      response = await adminStore.request.put(`/admin/area/${currentArea.value._id}`, areaForm)
     }
 
     if (response.code === 200) {
@@ -378,7 +378,7 @@ const deleteArea = async (area) => {
       }
     )
 
-    const response = await adminStore.request.delete(`/api/admin/area/${area._id}`)
+    const response = await adminStore.request.delete(`/admin/area/${area._id}`)
 
     if (response.code === 200) {
       ElMessage.success('区域删除成功')
@@ -396,7 +396,7 @@ const deleteArea = async (area) => {
 
 const handleStatusChange = async (area) => {
   try {
-    const response = await adminStore.request.put(`/api/admin/area/${area._id}`, { isActive: area.isActive })
+    const response = await adminStore.request.put(`/admin/area/${area._id}`, { isActive: area.isActive })
 
     if (response.code === 200) {
       ElMessage.success('状态更新成功')
