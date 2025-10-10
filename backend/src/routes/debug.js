@@ -63,4 +63,34 @@ router.get('/activities', async (req, res) => {
   }
 })
 
+router.get('/tasks', async (req, res) => {
+  try {
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接',
+        connectionState: mongoose.connection.readyState
+      })
+    }
+
+    const Task = require('../models/Task')
+    const tasks = await Task.find().populate('area', 'name').populate('activity', 'title')
+    res.json({
+      code: 200,
+      message: '获取成功',
+      data: { 
+        tasks,
+        count: tasks.length
+      }
+    })
+  } catch (error) {
+    console.error('获取任务失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: error.message || '获取任务失败'
+    })
+  }
+})
+
 module.exports = router
