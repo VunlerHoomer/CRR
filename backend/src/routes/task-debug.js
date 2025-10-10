@@ -100,39 +100,42 @@ router.get('/area/:areaId/tasks', async (req, res) => {
       })
     }
 
-    // 暂时返回模拟的任务数据
-    // 后续可以从数据库中的Task模型获取真实数据
-    const mockTasks = [
-      {
-        _id: 'task-1',
-        area: areaId,
-        type: 'choice',
-        question: '这是一个测试选择题',
-        description: '请选择正确答案',
-        options: ['选项A', '选项B', '选项C', '选项D'],
-        answer: '选项A',
-        points: 10,
-        order: 1,
-        isActive: true
-      },
-      {
-        _id: 'task-2',
-        area: areaId,
-        type: 'text',
-        question: '这是一个测试填空题',
-        description: '请填写正确答案',
-        answer: '正确答案',
-        points: 15,
-        order: 2,
-        isActive: true
-      }
-    ]
+    // 从数据库获取真实的任务数据
+    const Task = require('../models/Task')
+    const tasks = await Task.find({ 
+      area: areaId,
+      isActive: true 
+    }).sort({ order: 1, createdAt: 1 })
+
+    // 转换为前端需要的格式
+    const formattedTasks = tasks.map(task => ({
+      _id: task._id,
+      title: task.title,
+      description: task.description,
+      question: task.question,
+      questionType: task.questionType,
+      options: task.options || [],
+      correctAnswer: task.correctAnswer,
+      correctAnswers: task.correctAnswers || [],
+      answerMatchType: task.answerMatchType,
+      caseSensitive: task.caseSensitive,
+      numberTolerance: task.numberTolerance,
+      hint: task.hint,
+      points: task.points,
+      order: task.order,
+      maxAttempts: task.maxAttempts,
+      isActive: task.isActive,
+      difficulty: task.difficulty,
+      // 兼容前端可能使用的字段名
+      type: task.questionType,
+      answer: task.correctAnswer
+    }))
 
     res.json({
       code: 200,
       message: '获取成功',
       data: { 
-        tasks: mockTasks
+        tasks: formattedTasks
       }
     })
   } catch (error) {
