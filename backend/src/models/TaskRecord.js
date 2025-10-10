@@ -24,7 +24,7 @@ const taskRecordSchema = new mongoose.Schema({
   // 用户答案
   userAnswer: {
     type: mongoose.Schema.Types.Mixed,
-    required: [true, '用户答案不能为空']
+    default: null
   },
   // 是否正确
   isCorrect: {
