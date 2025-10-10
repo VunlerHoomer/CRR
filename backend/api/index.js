@@ -126,7 +126,7 @@ app.get('/', (req, res) => {
   res.json({
     code: 200,
     message: 'CRR城市定向 API',
-    version: '2.0.0',
+    version: '2.0.1',
     endpoints: {
       health: '/api/health',
       auth: '/api/auth',
@@ -136,6 +136,7 @@ app.get('/', (req, res) => {
       lottery: '/api/lottery',
       ranking: '/api/ranking',
       team: '/api/team',
+      task: '/api/task',
       admin: '/api/admin/*'
     }
   })

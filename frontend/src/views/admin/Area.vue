@@ -4,30 +4,31 @@
       <template #header>
         <div class="card-header">
           <span>区域管理</span>
-          <div class="header-actions">
-            <el-button type="primary" @click="openCreateDialog">
-              <el-icon><Plus /></el-icon>
-              新增区域
-            </el-button>
-            <el-button @click="fetchAreas">
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
-          </div>
+          <el-button type="primary" @click="showCreateDialog">
+            <el-icon><Plus /></el-icon>
+            添加区域
+          </el-button>
         </div>
       </template>
 
-      <!-- 筛选条件 -->
+      <!-- 搜索和筛选 -->
       <div class="filter-section">
-        <el-form :model="filterForm" inline>
-          <el-form-item label="所属活动">
-            <el-select 
-              v-model="filterForm.activityId" 
-              placeholder="选择活动" 
-              clearable 
-              @change="fetchAreas" 
-              style="width: 200px"
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索区域名称或描述"
+              clearable
+              @clear="handleSearch"
+              @keyup.enter="handleSearch"
             >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-col>
+          <el-col :span="6">
+            <el-select v-model="selectedActivity" placeholder="选择活动" clearable @change="handleSearch">
               <el-option
                 v-for="activity in activities"
                 :key="activity._id"
@@ -35,117 +36,83 @@
                 :value="activity._id"
               />
             </el-select>
-          </el-form-item>
-          <el-form-item label="关键词">
-            <el-input
-              v-model="filterForm.keyword"
-              placeholder="搜索区域名称或描述"
-              @keyup.enter="fetchAreas"
-              style="width: 200px"
-            >
-              <template #append>
-                <el-button @click="fetchAreas">
-                  <el-icon><Search /></el-icon>
-                </el-button>
-              </template>
-            </el-input>
-          </el-form-item>
-        </el-form>
+          </el-col>
+          <el-col :span="4">
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+          </el-col>
+        </el-row>
       </div>
 
       <!-- 区域列表 -->
-      <el-table 
-        :data="areas" 
+      <el-table
+        :data="areas"
         v-loading="loading"
+        style="width: 100%"
         row-key="_id"
-        @sort-change="handleSortChange"
       >
-        <el-table-column prop="order" label="顺序" width="80" sortable="custom">
+        <el-table-column prop="order" label="顺序" width="80" />
+        <el-table-column label="图标" width="80">
           <template #default="{ row }">
-            <el-tag size="small">{{ row.order }}</el-tag>
+            <span :style="{ color: row.color, fontSize: '20px' }">{{ row.icon }}</span>
           </template>
         </el-table-column>
-        
-        <el-table-column prop="name" label="区域名称" min-width="150">
-          <template #default="{ row }">
-            <div class="area-name">
-              <span class="area-icon">{{ row.icon }}</span>
-              <span>{{ row.name }}</span>
-              <el-tag 
-                :color="row.color" 
-                size="small" 
-                style="margin-left: 8px; color: white;"
-              >
-                {{ row.activity?.title }}
-              </el-tag>
-            </div>
-          </template>
-        </el-table-column>
-        
+        <el-table-column prop="name" label="区域名称" min-width="150" />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        
+        <el-table-column label="关联活动" min-width="150">
+          <template #default="{ row }">
+            <el-tag v-if="row.activity">{{ row.activity.title }}</el-tag>
+            <span v-else class="text-muted">未关联</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="completionBonus" label="完成奖励" width="100">
           <template #default="{ row }">
-            <el-tag type="warning" size="small">{{ row.completionBonus }}分</el-tag>
+            <el-tag type="success">{{ row.completionBonus }}分</el-tag>
           </template>
         </el-table-column>
-        
-        <el-table-column prop="isActive" label="状态" width="80">
+        <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <el-switch
               v-model="row.isActive"
-              @change="toggleActive(row)"
+              @change="handleStatusChange(row)"
             />
           </template>
         </el-table-column>
-        
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openEditDialog(row)">
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button 
-              size="small" 
-              type="danger" 
-              @click="deleteArea(row)"
-            >
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
+            <el-button type="info" size="small" @click="viewDetails(row)">详情</el-button>
+            <el-button type="primary" size="small" @click="editArea(row)">编辑</el-button>
+            <el-button type="danger" size="small" @click="deleteArea(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchAreas"
-          @current-change="fetchAreas"
-        />
-      </div>
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        style="margin-top: 20px; justify-content: center"
+      />
     </el-card>
 
     <!-- 创建/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑区域' : '新增区域'"
+      :title="dialogMode === 'create' ? '添加区域' : '编辑区域'"
       width="600px"
-      :close-on-click-modal="false"
     >
       <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
+        ref="areaFormRef"
+        :model="areaForm"
+        :rules="areaRules"
         label-width="100px"
       >
-        <el-form-item label="所属活动" prop="activity">
-          <el-select v-model="form.activity" placeholder="请选择活动" style="width: 100%">
+        <el-form-item label="关联活动" prop="activity">
+          <el-select v-model="areaForm.activity" placeholder="请选择活动" style="width: 100%">
             <el-option
               v-for="activity in activities"
               :key="activity._id"
@@ -154,117 +121,165 @@
             />
           </el-select>
         </el-form-item>
-        
         <el-form-item label="区域名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入区域名称" />
+          <el-input v-model="areaForm.name" placeholder="请输入区域名称" />
         </el-form-item>
-        
-        <el-form-item label="区域描述">
+        <el-form-item label="描述" prop="description">
           <el-input
-            v-model="form.description"
+            v-model="areaForm.description"
             type="textarea"
             :rows="3"
             placeholder="请输入区域描述"
           />
         </el-form-item>
-        
-        <el-form-item label="区域图标">
-          <el-input v-model="form.icon" placeholder="请输入图标（如：📍）" />
-        </el-form-item>
-        
-        <el-form-item label="区域颜色">
-          <el-color-picker v-model="form.color" />
-        </el-form-item>
-        
-        <el-form-item label="排序" prop="order">
-          <el-input-number v-model="form.order" :min="0" />
-        </el-form-item>
-        
-        <el-form-item label="完成奖励" prop="completionBonus">
-          <el-input-number v-model="form.completionBonus" :min="0" />
-          <span style="margin-left: 8px; color: #999;">分</span>
-        </el-form-item>
-        
-        <el-form-item label="状态">
-          <el-switch v-model="form.isActive" />
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="显示顺序" prop="order">
+              <el-input-number v-model="areaForm.order" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="完成奖励" prop="completionBonus">
+              <el-input-number v-model="areaForm.completionBonus" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="图标" prop="icon">
+              <el-input v-model="areaForm.icon" placeholder="请输入图标" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="颜色" prop="color">
+              <el-color-picker v-model="areaForm.color" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="状态" prop="isActive">
+          <el-switch v-model="areaForm.isActive" />
         </el-form-item>
       </el-form>
-      
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm" :loading="submitting">
-          {{ isEdit ? '更新' : '创建' }}
-        </el-button>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+            {{ dialogMode === 'create' ? '创建' : '更新' }}
+          </el-button>
+        </div>
       </template>
+    </el-dialog>
+
+    <!-- 详情对话框 -->
+    <el-dialog v-model="detailsDialogVisible" title="区域详情" width="500px">
+      <div v-if="currentArea">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="区域名称">{{ currentArea.name }}</el-descriptions-item>
+          <el-descriptions-item label="描述">{{ currentArea.description || '无' }}</el-descriptions-item>
+          <el-descriptions-item label="关联活动">
+            <el-tag v-if="currentArea.activity">{{ currentArea.activity.title }}</el-tag>
+            <span v-else>未关联</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="显示顺序">{{ currentArea.order }}</el-descriptions-item>
+          <el-descriptions-item label="完成奖励">{{ currentArea.completionBonus }}分</el-descriptions-item>
+          <el-descriptions-item label="图标">
+            <span :style="{ color: currentArea.color, fontSize: '20px' }">{{ currentArea.icon }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="currentArea.isActive ? 'success' : 'info'">
+              {{ currentArea.isActive ? '启用' : '禁用' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="创建时间">
+            {{ formatDate(currentArea.createdAt) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="更新时间">
+            {{ formatDate(currentArea.updatedAt) }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, Search, Edit, Delete } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useAdminStore } from '@/store/admin'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Search, Edit, Delete, View } from '@element-plus/icons-vue'
 
 const adminStore = useAdminStore()
 
-// 数据
-const areas = ref([])
-const activities = ref([])
+// 响应式数据
 const loading = ref(false)
 const submitting = ref(false)
+const dialogVisible = ref(false)
+const detailsDialogVisible = ref(false)
+const dialogMode = ref('create')
+const currentArea = ref(null)
 
 // 分页
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
 
-// 筛选表单
-const filterForm = ref({
-  activityId: '',
-  keyword: ''
-})
+// 搜索
+const searchKeyword = ref('')
+const selectedActivity = ref('')
 
-// 对话框
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref()
+// 数据
+const areas = ref([])
+const activities = ref([])
 
-// 表单数据
-const form = ref({
+// 表单
+const areaFormRef = ref()
+const areaForm = reactive({
   activity: '',
   name: '',
   description: '',
+  order: 0,
+  isActive: true,
   icon: '📍',
   color: '#409eff',
-  order: 0,
-  completionBonus: 50,
-  isActive: true
+  completionBonus: 50
 })
 
 // 表单验证规则
-const rules = {
-  activity: [{ required: true, message: '请选择活动', trigger: 'change' }],
+const areaRules = {
+  activity: [{ required: true, message: '请选择关联活动', trigger: 'change' }],
   name: [{ required: true, message: '请输入区域名称', trigger: 'blur' }],
-  order: [{ required: true, message: '请输入排序', trigger: 'blur' }],
+  order: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
   completionBonus: [{ required: true, message: '请输入完成奖励', trigger: 'blur' }]
 }
 
-// 获取区域列表
-const fetchAreas = async () => {
-  loading.value = true
+// 方法
+const loadAreas = async () => {
   try {
+    loading.value = true
     const params = {
       page: currentPage.value,
-      limit: pageSize.value,
-      ...filterForm.value
+      limit: pageSize.value
+    }
+    
+    if (searchKeyword.value) {
+      params.keyword = searchKeyword.value
+    }
+    
+    if (selectedActivity.value) {
+      params.activityId = selectedActivity.value
     }
 
-    const response = await adminStore.request.get('/admin/area/list', { params })
-    
+    const response = await adminStore.request({
+      url: '/api/admin/area/list',
+      method: 'GET',
+      params
+    })
+
     if (response.code === 200) {
       areas.value = response.data.areas
       total.value = response.data.pagination.total
+    } else {
+      ElMessage.error(response.message || '获取区域列表失败')
     }
   } catch (error) {
     console.error('获取区域列表失败:', error)
@@ -274,127 +289,178 @@ const fetchAreas = async () => {
   }
 }
 
-// 获取活动列表
-const fetchActivities = async () => {
+const loadActivities = async () => {
   try {
-    const response = await adminStore.request.get('/admin/activity/list', {
+    const response = await adminStore.request({
+      url: '/api/activity/list',
+      method: 'GET',
       params: { limit: 100 }
     })
-    
+
     if (response.code === 200) {
-      activities.value = response.data.activities || []
+      activities.value = response.data.activities
     }
   } catch (error) {
     console.error('获取活动列表失败:', error)
   }
 }
 
-// 打开创建对话框
-const openCreateDialog = () => {
-  isEdit.value = false
-  form.value = {
-    activity: filterForm.value.activityId || '',
-    name: '',
-    description: '',
-    icon: '📍',
-    color: '#409eff',
-    order: 0,
-    completionBonus: 50,
-    isActive: true
-  }
+const showCreateDialog = () => {
+  dialogMode.value = 'create'
+  resetForm()
   dialogVisible.value = true
 }
 
-// 打开编辑对话框
-const openEditDialog = (area) => {
-  isEdit.value = true
-  form.value = { ...area }
+const editArea = (area) => {
+  dialogMode.value = 'edit'
+  Object.assign(areaForm, {
+    activity: area.activity?._id || '',
+    name: area.name,
+    description: area.description,
+    order: area.order,
+    isActive: area.isActive,
+    icon: area.icon,
+    color: area.color,
+    completionBonus: area.completionBonus
+  })
+  currentArea.value = area
   dialogVisible.value = true
 }
 
-// 提交表单
-const submitForm = async () => {
-  if (!formRef.value) return
+const viewDetails = (area) => {
+  currentArea.value = area
+  detailsDialogVisible.value = true
+}
+
+const handleSubmit = async () => {
+  if (!areaFormRef.value) return
   
   try {
-    await formRef.value.validate()
-    
+    await areaFormRef.value.validate()
     submitting.value = true
+
+    const url = dialogMode.value === 'create' 
+      ? '/api/admin/area'
+      : `/api/admin/area/${currentArea.value._id}`
     
-    const url = isEdit.value ? `/admin/area/${form.value._id}` : '/admin/area'
-    const method = isEdit.value ? 'put' : 'post'
-    
-    const response = await adminStore.request[method](url, form.value)
-    
+    const method = dialogMode.value === 'create' ? 'POST' : 'PUT'
+
+    const response = await adminStore.request({
+      url,
+      method,
+      data: areaForm
+    })
+
     if (response.code === 200) {
-      ElMessage.success(isEdit.value ? '区域更新成功' : '区域创建成功')
+      ElMessage.success(dialogMode.value === 'create' ? '区域创建成功' : '区域更新成功')
       dialogVisible.value = false
-      fetchAreas()
+      loadAreas()
+    } else {
+      ElMessage.error(response.message || '操作失败')
     }
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error(error.response?.data?.message || '操作失败')
+    ElMessage.error('操作失败')
   } finally {
     submitting.value = false
   }
 }
 
-// 切换激活状态
-const toggleActive = async (area) => {
-  try {
-    const response = await adminStore.request.put(`/admin/area/${area._id}`, {
-      isActive: area.isActive
-    })
-    
-    if (response.code === 200) {
-      ElMessage.success('状态更新成功')
-    }
-  } catch (error) {
-    console.error('更新状态失败:', error)
-    ElMessage.error('更新状态失败')
-    // 回滚状态
-    area.isActive = !area.isActive
-  }
-}
-
-// 删除区域
 const deleteArea = async (area) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除区域"${area.name}"吗？此操作不可撤销。`,
-      '确认删除',
+      `确定要删除区域 "${area.name}" 吗？删除后无法恢复！`,
+      '删除确认',
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }
     )
-    
-    const response = await adminStore.request.delete(`/admin/area/${area._id}`)
-    
+
+    const response = await adminStore.request({
+      url: `/api/admin/area/${area._id}`,
+      method: 'DELETE'
+    })
+
     if (response.code === 200) {
       ElMessage.success('区域删除成功')
-      fetchAreas()
+      loadAreas()
+    } else {
+      ElMessage.error(response.message || '删除失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除区域失败:', error)
-      ElMessage.error(error.response?.data?.message || '删除失败')
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败')
     }
   }
 }
 
-// 排序处理
-const handleSortChange = ({ prop, order }) => {
-  if (prop === 'order') {
-    // 这里可以实现排序逻辑
-    console.log('排序:', prop, order)
+const handleStatusChange = async (area) => {
+  try {
+    const response = await adminStore.request({
+      url: `/api/admin/area/${area._id}`,
+      method: 'PUT',
+      data: { isActive: area.isActive }
+    })
+
+    if (response.code === 200) {
+      ElMessage.success('状态更新成功')
+    } else {
+      ElMessage.error(response.message || '状态更新失败')
+      // 恢复原状态
+      area.isActive = !area.isActive
+    }
+  } catch (error) {
+    console.error('状态更新失败:', error)
+    ElMessage.error('状态更新失败')
+    // 恢复原状态
+    area.isActive = !area.isActive
   }
 }
 
+const handleSearch = () => {
+  currentPage.value = 1
+  loadAreas()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadAreas()
+}
+
+const handleCurrentChange = (page) => {
+  currentPage.value = page
+  loadAreas()
+}
+
+const resetForm = () => {
+  Object.assign(areaForm, {
+    activity: '',
+    name: '',
+    description: '',
+    order: 0,
+    isActive: true,
+    icon: '📍',
+    color: '#409eff',
+    completionBonus: 50
+  })
+  currentArea.value = null
+  if (areaFormRef.value) {
+    areaFormRef.value.clearValidate()
+  }
+}
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleString('zh-CN')
+}
+
+// 生命周期
 onMounted(() => {
-  fetchActivities()
-  fetchAreas()
+  loadActivities()
+  loadAreas()
 })
 </script>
 
@@ -409,31 +475,22 @@ onMounted(() => {
   align-items: center;
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
 .filter-section {
   margin-bottom: 20px;
   padding: 20px;
   background: #f5f7fa;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
-.area-name {
-  display: flex;
-  align-items: center;
+.text-muted {
+  color: #909399;
 }
 
-.area-icon {
-  margin-right: 8px;
-  font-size: 16px;
+.dialog-footer {
+  text-align: right;
 }
 
-.pagination-container {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
+:deep(.el-descriptions__label) {
+  font-weight: 600;
 }
 </style>
