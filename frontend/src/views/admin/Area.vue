@@ -269,11 +269,7 @@ const loadAreas = async () => {
       params.activityId = selectedActivity.value
     }
 
-    const response = await adminStore.request({
-      url: '/api/admin/area/list',
-      method: 'GET',
-      params
-    })
+    const response = await adminStore.request.get('/api/admin/area/list', { params })
 
     if (response.code === 200) {
       areas.value = response.data.areas
@@ -291,11 +287,7 @@ const loadAreas = async () => {
 
 const loadActivities = async () => {
   try {
-    const response = await adminStore.request({
-      url: '/api/activity/list',
-      method: 'GET',
-      params: { limit: 100 }
-    })
+    const response = await adminStore.request.get('/api/activity/list', { params: { limit: 100 } })
 
     if (response.code === 200) {
       activities.value = response.data.activities
@@ -339,17 +331,12 @@ const handleSubmit = async () => {
     await areaFormRef.value.validate()
     submitting.value = true
 
-    const url = dialogMode.value === 'create' 
-      ? '/api/admin/area'
-      : `/api/admin/area/${currentArea.value._id}`
-    
-    const method = dialogMode.value === 'create' ? 'POST' : 'PUT'
-
-    const response = await adminStore.request({
-      url,
-      method,
-      data: areaForm
-    })
+    let response
+    if (dialogMode.value === 'create') {
+      response = await adminStore.request.post('/api/admin/area', areaForm)
+    } else {
+      response = await adminStore.request.put(`/api/admin/area/${currentArea.value._id}`, areaForm)
+    }
 
     if (response.code === 200) {
       ElMessage.success(dialogMode.value === 'create' ? '区域创建成功' : '区域更新成功')
@@ -378,10 +365,7 @@ const deleteArea = async (area) => {
       }
     )
 
-    const response = await adminStore.request({
-      url: `/api/admin/area/${area._id}`,
-      method: 'DELETE'
-    })
+    const response = await adminStore.request.delete(`/api/admin/area/${area._id}`)
 
     if (response.code === 200) {
       ElMessage.success('区域删除成功')
@@ -399,11 +383,7 @@ const deleteArea = async (area) => {
 
 const handleStatusChange = async (area) => {
   try {
-    const response = await adminStore.request({
-      url: `/api/admin/area/${area._id}`,
-      method: 'PUT',
-      data: { isActive: area.isActive }
-    })
+    const response = await adminStore.request.put(`/api/admin/area/${area._id}`, { isActive: area.isActive })
 
     if (response.code === 200) {
       ElMessage.success('状态更新成功')
