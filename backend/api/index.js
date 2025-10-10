@@ -78,11 +78,19 @@ app.use('/api/team', require('../src/routes/team'))
 // 尝试注册任务路由
 try {
   console.log('🔄 正在注册任务路由...')
-  app.use('/api/task', require('../src/routes/task-simple'))
+  app.use('/api/task', require('../src/routes/task-debug'))
   console.log('✅ 任务路由注册成功')
 } catch (error) {
   console.error('❌ 任务路由注册失败:', error.message)
   console.error('错误堆栈:', error.stack)
+}
+
+// 调试路由
+try {
+  app.use('/api/debug', require('../src/routes/debug'))
+  console.log('✅ 调试路由注册成功')
+} catch (error) {
+  console.error('❌ 调试路由注册失败:', error.message)
 }
 
 // 管理员路由
