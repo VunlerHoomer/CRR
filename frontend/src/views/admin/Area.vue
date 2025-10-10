@@ -269,17 +269,24 @@ const loadAreas = async () => {
       params.activityId = selectedActivity.value
     }
 
+    console.log('🔄 正在获取区域列表，参数:', params)
     const response = await adminStore.request.get('/api/admin/area/list', { params })
 
     if (response.code === 200) {
       areas.value = response.data.areas
       total.value = response.data.pagination.total
+      console.log('✅ 区域列表加载成功:', response.data.areas.length, '个区域')
     } else {
+      console.error('❌ 区域API返回错误:', response)
       ElMessage.error(response.message || '获取区域列表失败')
     }
   } catch (error) {
-    console.error('获取区域列表失败:', error)
-    ElMessage.error('获取区域列表失败')
+    console.error('❌ 获取区域列表失败:', error)
+    if (error.response?.status === 401) {
+      ElMessage.error('请先登录管理员账号')
+    } else {
+      ElMessage.error('获取区域列表失败: ' + (error.message || error))
+    }
   } finally {
     loading.value = false
   }
@@ -287,13 +294,19 @@ const loadAreas = async () => {
 
 const loadActivities = async () => {
   try {
+    // 使用用户API获取活动列表，因为管理员需要查看所有活动
     const response = await adminStore.request.get('/api/activity/list', { params: { limit: 100 } })
 
     if (response.code === 200) {
       activities.value = response.data.activities
+      console.log('✅ 活动列表加载成功:', response.data.activities.length, '个活动')
+    } else {
+      console.error('❌ 活动API返回错误:', response)
+      ElMessage.error(response.message || '获取活动列表失败')
     }
   } catch (error) {
-    console.error('获取活动列表失败:', error)
+    console.error('❌ 获取活动列表失败:', error)
+    ElMessage.error('获取活动列表失败: ' + (error.message || error))
   }
 }
 
@@ -439,6 +452,16 @@ const formatDate = (date) => {
 
 // 生命周期
 onMounted(() => {
+  // 检查管理员登录状态
+  if (!adminStore.isLoggedIn) {
+    console.warn('⚠️ 管理员未登录，重定向到登录页面')
+    ElMessage.warning('请先登录管理员账号')
+    // 可以在这里重定向到登录页面
+    // router.push('/admin/login')
+    return
+  }
+  
+  console.log('✅ 管理员已登录:', adminStore.admin?.username)
   loadActivities()
   loadAreas()
 })
