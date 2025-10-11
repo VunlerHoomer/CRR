@@ -27,7 +27,6 @@
 
         <!-- 溯槎问帙地图 -->
         <div class="activity-map">
-          <h2>溯槎问帙地图</h2>
           <div class="map-container">
             <img 
               src="/images/activities/suchawenzhi-map.png" 
@@ -161,16 +160,24 @@
     </el-dialog>
     </div>
     
-    <!-- 活动不存在时的显示 -->
-    <div v-else class="activity-not-found">
-      <div class="not-found-content">
-        <h2 style="color: #d73a49; text-align: center; margin-bottom: 20px;">加载失败</h2>
-        <p style="color: #666; text-align: center; margin-bottom: 30px;">
-          活动信息加载失败，请检查网络连接或稍后重试
-        </p>
-        <div style="text-align: center;">
-          <el-button type="primary" @click="fetchActivityDetail">重新加载</el-button>
-          <el-button @click="goBack">返回活动列表</el-button>
+    <!-- 显示溯槎问帙地图 -->
+    <div v-else class="activity-map-only">
+      <div class="map-container">
+        <img 
+          src="/images/activities/suchawenzhi-map.png" 
+          alt="溯槎问帙活动地图"
+          class="activity-map-image"
+        />
+        <div class="map-overlay">
+          <div class="map-legend">
+            <h3>地图说明</h3>
+            <ul>
+              <li>🏛️ 人大江市 - 起点</li>
+              <li>🏯 传统建筑 - 检查点</li>
+              <li>🎓 學大吳東 - 终点</li>
+              <li>🏢 现代建筑 - 任务点</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -519,18 +526,18 @@ onMounted(async () => {
   border-bottom: none;
 }
 
-/* 活动不存在样式 */
-.activity-not-found {
+/* 只显示地图的样式 */
+.activity-map-only {
+  padding: 20px;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  padding: 40px 20px;
 }
 
-.not-found-content {
-  max-width: 500px;
-  text-align: center;
+.activity-map-only .map-container {
+  width: 100%;
+  max-width: 1200px;
 }
 
 /* 响应式设计 */
