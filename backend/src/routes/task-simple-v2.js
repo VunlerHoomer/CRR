@@ -12,7 +12,7 @@ router.get('/test', (req, res) => {
 })
 
 // 获取活动区域列表 - 使用真实数据库数据
-router.get('/areas/:activityId', async (req, res) => {
+router.get('/areas/:activityId', require('../../middleware/auth'), async (req, res) => {
   try {
     const { activityId } = req.params
     
@@ -34,9 +34,26 @@ router.get('/areas/:activityId', async (req, res) => {
       isActive: true 
     }).sort({ order: 1 })
 
-    // 获取用户在该活动中的所有答题记录（暂时设为空，因为没有用户认证）
-    const userRecords = []
+    // 获取用户在该活动中的所有答题记录
+    const userId = req.user._id
+    const userRecords = await TaskRecord.find({
+      user: userId,
+      activity: activityId,
+      isCorrect: true
+    }).populate('task')
+
     const progressByArea = {}
+    userRecords.forEach(record => {
+      const areaId = record.task.area.toString()
+      if (!progressByArea[areaId]) {
+        progressByArea[areaId] = {
+          completedTasks: 0,
+          totalPoints: 0
+        }
+      }
+      progressByArea[areaId].completedTasks += 1
+      progressByArea[areaId].totalPoints += record.pointsEarned
+    })
 
     // 转换为前端需要的格式，包含解锁状态
     const formattedAreas = []
@@ -108,22 +125,68 @@ router.get('/areas/:activityId', async (req, res) => {
   }
 })
 
-// 获取用户进度统计 - 简化版本
-router.get('/progress/:activityId', (req, res) => {
+// 获取用户进度统计 - 使用真实数据
+router.get('/progress/:activityId', require('../../middleware/auth'), async (req, res) => {
   try {
     const { activityId } = req.params
+    const userId = req.user._id
+    
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接'
+      })
+    }
+
+    // 获取用户统计数据
+    const TaskRecord = require('../models/TaskRecord')
+    const Area = require('../models/Area')
+    const Task = require('../models/Task')
+    
+    const stats = await TaskRecord.getUserStats(userId, activityId)
+    
+    // 获取区域进度
+    const areas = await Area.find({ 
+      activity: activityId,
+      isActive: true 
+    }).sort({ order: 1 })
+
+    const areaProgress = []
+    for (const area of areas) {
+      const totalTasks = await Task.countDocuments({
+        area: area._id,
+        activity: activityId,
+        isActive: true
+      })
+      
+      const completedRecords = await TaskRecord.find({
+        user: userId,
+        task: { $in: await Task.find({ area: area._id, activity: activityId, isActive: true }).distinct('_id') },
+        isCorrect: true
+      })
+      
+      areaProgress.push({
+        areaId: area._id,
+        areaName: area.name,
+        areaIcon: area.icon || '📍',
+        areaColor: area.color || '#409eff',
+        progress: {
+          completedCount: completedRecords.length,
+          totalTasks,
+          percentage: totalTasks > 0 ? Math.round((completedRecords.length / totalTasks) * 100) : 0,
+          isCompleted: completedRecords.length === totalTasks && totalTasks > 0,
+          totalPoints: completedRecords.reduce((sum, record) => sum + (record.pointsEarned || 0), 0)
+        }
+      })
+    }
     
     res.json({
       code: 200,
       message: '获取成功',
       data: {
-        stats: {
-          totalTasks: 6,
-          correctTasks: 0,
-          totalPoints: 0,
-          accuracy: 0
-        },
-        areaProgress: []
+        stats,
+        areaProgress
       }
     })
   } catch (error) {
@@ -213,8 +276,47 @@ router.post('/:taskId/submit', async (req, res) => {
       }
     }
 
-    // 保存答题记录到数据库（暂时不保存，因为没有用户认证）
-    // TODO: 添加用户认证后保存TaskRecord
+    // 保存答题记录到数据库
+    const userId = req.user._id
+    
+    // 查找或创建答题记录
+    let taskRecord = await TaskRecord.findOne({
+      user: userId,
+      task: task._id
+    })
+
+    if (taskRecord) {
+      // 更新现有记录
+      taskRecord.userAnswer = answer
+      taskRecord.isCorrect = isCorrect
+      taskRecord.pointsEarned = isCorrect ? task.points : 0
+      taskRecord.attemptCount += 1
+      taskRecord.errorCount += isCorrect ? 0 : 1
+      taskRecord.submittedAt = new Date()
+      
+      if (isCorrect && !taskRecord.completedAt) {
+        taskRecord.completedAt = new Date()
+      }
+      
+      await taskRecord.save()
+    } else {
+      // 创建新记录
+      taskRecord = new TaskRecord({
+        user: userId,
+        activity: task.activity,
+        area: task.area,
+        task: task._id,
+        userAnswer: answer,
+        isCorrect,
+        pointsEarned: isCorrect ? task.points : 0,
+        attemptCount: 1,
+        errorCount: isCorrect ? 0 : 1,
+        submittedAt: new Date(),
+        completedAt: isCorrect ? new Date() : null
+      })
+      
+      await taskRecord.save()
+    }
 
     const result = {
       taskId: task._id,
@@ -222,7 +324,13 @@ router.post('/:taskId/submit', async (req, res) => {
       correctAnswer: task.correctAnswer,
       isCorrect,
       points: isCorrect ? task.points : 0,
-      feedback
+      feedback,
+      taskRecord: {
+        id: taskRecord._id,
+        attemptCount: taskRecord.attemptCount,
+        completedAt: taskRecord.completedAt,
+        pointsEarned: taskRecord.pointsEarned
+      }
     }
 
     res.json({
@@ -262,9 +370,17 @@ router.get('/area/:areaId/tasks', async (req, res) => {
       isActive: true 
     }).sort({ order: 1, createdAt: 1 })
 
-    // 获取用户的答题记录（暂时设为空，因为没有用户认证）
-    const userRecords = []
+    // 获取用户的答题记录
+    const userId = req.user._id
+    const userRecords = await TaskRecord.find({
+      user: userId,
+      task: { $in: tasks.map(t => t._id) }
+    })
+
     const recordMap = {}
+    userRecords.forEach(record => {
+      recordMap[record.task.toString()] = record
+    })
 
     // 转换为前端需要的格式，包含用户进度
     const formattedTasks = tasks.map(task => {
