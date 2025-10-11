@@ -67,7 +67,12 @@ router.get('/areas/:activityId', async (req, res) => {
           activity: activityId,
           isActive: true
         })
-        isUnlocked = previousProgress && previousProgress.completedTasks === previousTotalTasks && previousTotalTasks > 0
+        // 如果前置区域没有任务，则直接解锁当前区域
+        if (previousTotalTasks === 0) {
+          isUnlocked = true
+        } else {
+          isUnlocked = previousProgress && previousProgress.completedTasks === previousTotalTasks && previousTotalTasks > 0
+        }
       }
       
       formattedAreas.push({
