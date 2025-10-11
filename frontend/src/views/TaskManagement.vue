@@ -103,7 +103,19 @@
 
       <!-- 区域列表 -->
       <div v-if="!currentArea" class="areas-section">
-        <h2 class="section-title">选择区域开始任务</h2>
+        <div class="section-header">
+          <h2 class="section-title">选择区域开始任务</h2>
+          <el-button 
+            @click="refreshAreasAndProgress" 
+            :loading="areasLoading || progressLoading"
+            type="primary" 
+            size="small"
+            class="refresh-btn"
+          >
+            <el-icon><Refresh /></el-icon>
+            刷新进度
+          </el-button>
+        </div>
         
         <!-- 加载状态 -->
         <div v-if="areasLoading" class="loading-container">
@@ -172,8 +184,8 @@
       <!-- 任务列表 -->
       <div v-else class="tasks-section">
         <div class="tasks-header">
-          <el-button @click="currentArea = null" class="back-to-areas">
-            <el-icon><ArrowLeft /></el-icon>
+          <el-button @click="handleBackToAreas" class="back-to-areas" :loading="areasLoading">
+            <el-icon v-if="!areasLoading"><ArrowLeft /></el-icon>
             返回区域列表
           </el-button>
           <div class="current-area-info">
@@ -546,6 +558,59 @@ const handleAreaClick = (area) => {
   selectArea(area)
 }
 
+// 处理返回区域列表
+const handleBackToAreas = async () => {
+  try {
+    console.log('🔄 返回区域列表，刷新最新进度...')
+    
+    // 清除当前区域
+    currentArea.value = null
+    tasks.value = []
+    
+    // 显示刷新提示
+    const loadingMessage = ElMessage({
+      message: '正在刷新最新进度...',
+      type: 'info',
+      duration: 0, // 不自动关闭
+      showClose: false
+    })
+    
+    // 重新获取区域列表和用户进度
+    await Promise.all([
+      fetchAreas(),
+      fetchUserProgress()
+    ])
+    
+    // 关闭加载提示
+    loadingMessage.close()
+    
+    console.log('✅ 区域列表刷新完成')
+    ElMessage.success('进度已更新')
+  } catch (error) {
+    console.error('❌ 返回区域列表失败:', error)
+    ElMessage.error('返回区域列表失败')
+  }
+}
+
+// 手动刷新区域和进度
+const refreshAreasAndProgress = async () => {
+  try {
+    console.log('🔄 手动刷新区域和进度...')
+    
+    // 重新获取区域列表和用户进度
+    await Promise.all([
+      fetchAreas(),
+      fetchUserProgress()
+    ])
+    
+    console.log('✅ 手动刷新完成')
+    ElMessage.success('进度已更新')
+  } catch (error) {
+    console.error('❌ 手动刷新失败:', error)
+    ElMessage.error('刷新失败')
+  }
+}
+
 const selectArea = async (area) => {
   currentArea.value = area
   await fetchAreaTasks(area._id)
@@ -679,8 +744,13 @@ const submitAnswer = async () => {
         
         taskDialogVisible.value = false
         
-        // 刷新进度
-        await fetchUserProgress()
+        // 刷新进度和区域列表状态
+        await Promise.all([
+          fetchUserProgress(),
+          fetchAreas() // 刷新区域列表以更新解锁状态和进度
+        ])
+        
+        console.log('✅ 答题进度已更新')
         
       } else {
         ElMessage.error('答案错误，请重试')
@@ -1258,5 +1328,19 @@ onMounted(async () => {
   font-size: 12px;
   color: #333;
   font-weight: 600;
+}
+
+/* 区域列表标题和刷新按钮 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 </style>
