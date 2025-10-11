@@ -160,6 +160,20 @@
       </template>
     </el-dialog>
     </div>
+    
+    <!-- 活动不存在时的显示 -->
+    <div v-else class="activity-not-found">
+      <div class="not-found-content">
+        <h2 style="color: #d73a49; text-align: center; margin-bottom: 20px;">加载失败</h2>
+        <p style="color: #666; text-align: center; margin-bottom: 30px;">
+          活动信息加载失败，请检查网络连接或稍后重试
+        </p>
+        <div style="text-align: center;">
+          <el-button type="primary" @click="fetchActivityDetail">重新加载</el-button>
+          <el-button @click="goBack">返回活动列表</el-button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -233,14 +247,21 @@ const fetchActivityDetail = async () => {
       return
     }
     
+    console.log('🔄 获取活动详情，ID:', activityId)
     const response = await getActivityDetail(activityId)
-    if (response.code === 200) {
+    console.log('📊 活动详情响应:', response)
+    
+    if (response.code === 200 && response.data && response.data.activity) {
       activity.value = response.data.activity
+      console.log('✅ 活动详情加载成功:', activity.value.title)
+    } else {
+      console.error('❌ 活动详情响应异常:', response)
+      activity.value = null
     }
   } catch (error) {
-    console.error('获取活动详情失败:', error)
-    ElMessage.error('获取活动详情失败')
-    router.push('/activity-center')
+    console.error('❌ 获取活动详情失败:', error)
+    activity.value = null
+    ElMessage.error('获取活动详情失败: ' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -496,6 +517,20 @@ onMounted(async () => {
 
 .map-legend li:last-child {
   border-bottom: none;
+}
+
+/* 活动不存在样式 */
+.activity-not-found {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 40px 20px;
+}
+
+.not-found-content {
+  max-width: 500px;
+  text-align: center;
 }
 
 /* 响应式设计 */
