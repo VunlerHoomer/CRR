@@ -134,37 +134,93 @@ router.get('/progress/:activityId', (req, res) => {
   }
 })
 
-// 提交任务答案 - 简化版本，暂时不保存到数据库
-router.post('/:taskId/submit', (req, res) => {
+// 提交任务答案 - 使用真实数据库数据进行验证
+router.post('/:taskId/submit', async (req, res) => {
   try {
     const { taskId } = req.params
     const { answer } = req.body
     
-    // 简单的答案比对逻辑
-    let isCorrect = false
-    let feedback = ''
-    
-    // 根据任务ID进行简单的答案比对
-    if (taskId === '68e8145feccf1de242ad114b') {
-      // 任务A1: 问题"111"，答案"11"
-      isCorrect = answer === '11'
-      feedback = isCorrect ? '回答正确！' : '回答错误。'
-    } else if (taskId === '68e94fa6722ab4d4041c990a') {
-      // 任务11111: 问题"11111"，答案"111"
-      isCorrect = answer === '111'
-      feedback = isCorrect ? '回答正确！' : '回答错误。 提示：111'
-    } else {
-      // 其他任务
-      isCorrect = false
-      feedback = '任务不存在或答案错误。'
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接'
+      })
     }
 
+    // 从数据库获取任务信息
+    const Task = require('../models/Task')
+    const task = await Task.findById(taskId)
+    
+    if (!task) {
+      return res.status(404).json({
+        code: 404,
+        message: '任务不存在'
+      })
+    }
+
+    if (!task.isActive) {
+      return res.status(400).json({
+        code: 400,
+        message: '任务已停用'
+      })
+    }
+
+    // 答案验证逻辑
+    let isCorrect = false
+    let feedback = ''
+
+    if (task.questionType === 'text') {
+      const userAnswer = String(answer || '').trim()
+      const correctAnswer = String(task.correctAnswer || '').trim()
+      
+      if (task.answerMatchType === 'exact') {
+        // 精确匹配
+        isCorrect = userAnswer === correctAnswer
+      } else if (task.answerMatchType === 'contains') {
+        // 包含匹配
+        isCorrect = userAnswer.includes(correctAnswer) || correctAnswer.includes(userAnswer)
+      } else if (task.answerMatchType === 'number') {
+        // 数字匹配
+        const userNum = parseFloat(userAnswer)
+        const correctNum = parseFloat(correctAnswer)
+        if (!isNaN(userNum) && !isNaN(correctNum)) {
+          if (task.numberTolerance > 0) {
+            isCorrect = Math.abs(userNum - correctNum) <= task.numberTolerance
+          } else {
+            isCorrect = userNum === correctNum
+          }
+        }
+      } else {
+        // 默认精确匹配
+        isCorrect = userAnswer === correctAnswer
+      }
+      
+      // 大小写处理
+      if (!task.caseSensitive && !isCorrect) {
+        isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase()
+      }
+    }
+
+    // 生成反馈信息
+    if (isCorrect) {
+      feedback = '回答正确！'
+    } else {
+      feedback = '回答错误。'
+      if (task.hint) {
+        feedback += ` 提示：${task.hint}`
+      }
+    }
+
+    // 保存答题记录到数据库（暂时不保存，因为没有用户认证）
+    // TODO: 添加用户认证后保存TaskRecord
+
     const result = {
-      taskId: taskId,
+      taskId: task._id,
       userAnswer: answer,
-      correctAnswer: isCorrect ? answer : '未知',
+      correctAnswer: task.correctAnswer,
       isCorrect,
-      points: isCorrect ? 10 : 0,
+      points: isCorrect ? task.points : 0,
       feedback
     }
 
