@@ -78,7 +78,7 @@ app.use('/api/team', require('../src/routes/team'))
 // 尝试注册任务路由
 try {
   console.log('🔄 正在注册任务路由...')
-  app.use('/api/task', require('../src/routes/task-with-memory'))
+  app.use('/api/task', require('../src/routes/task-final'))
   console.log('✅ 任务路由注册成功')
 } catch (error) {
   console.error('❌ 任务路由注册失败:', error.message)
