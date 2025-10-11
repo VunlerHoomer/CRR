@@ -114,6 +114,12 @@ const routes = [
         meta: { title: '队伍进度', requiresAdmin: true }
       }
     ]
+  },
+  {
+    path: '/debug/user',
+    name: 'UserDebug',
+    component: () => import('@/views/UserDebug.vue'),
+    meta: { title: '用户调试', hideHeader: true }
   }
 ]
 
