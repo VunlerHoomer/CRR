@@ -88,6 +88,7 @@ try {
 // 调试路由
 try {
   app.use('/api/debug', require('../src/routes/debug'))
+  app.use('/api/debug-user', require('../src/routes/debug-user'))
   console.log('✅ 调试路由注册成功')
 } catch (error) {
   console.error('❌ 调试路由注册失败:', error.message)
