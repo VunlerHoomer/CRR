@@ -104,7 +104,15 @@
       <!-- 区域列表 -->
       <div v-if="!currentArea" class="areas-section">
         <h2 class="section-title">选择区域开始任务</h2>
-        <div class="areas-grid">
+        
+        <!-- 加载状态 -->
+        <div v-if="areasLoading" class="loading-container">
+          <el-skeleton :rows="3" animated />
+          <div class="loading-text">正在加载区域信息...</div>
+        </div>
+        
+        <!-- 区域网格 -->
+        <div v-else class="areas-grid">
           <div 
             v-for="area in areas" 
             :key="area._id"
@@ -173,8 +181,15 @@
             <span class="area-name">{{ currentArea.name }}</span>
           </div>
         </div>
-
-        <div class="tasks-grid">
+        
+        <!-- 任务加载状态 -->
+        <div v-if="tasksLoading" class="loading-container">
+          <el-skeleton :rows="3" animated />
+          <div class="loading-text">正在加载任务信息...</div>
+        </div>
+        
+        <!-- 任务网格 -->
+        <div v-else class="tasks-grid">
           <div 
             v-for="task in tasks" 
             :key="task._id"
@@ -193,6 +208,28 @@
             </div>
             
             <div class="task-description">{{ task.description || task.question }}</div>
+            
+            <!-- 答题情况显示 -->
+            <div v-if="task.userRecord" class="task-progress">
+              <div class="progress-info">
+                <span class="progress-label">答题状态:</span>
+                <el-tag :type="task.userRecord.isCorrect ? 'success' : 'warning'" size="small">
+                  {{ task.userRecord.isCorrect ? '已完成' : '进行中' }}
+                </el-tag>
+              </div>
+              <div class="progress-info">
+                <span class="progress-label">尝试次数:</span>
+                <span class="progress-value">{{ task.userRecord.attemptCount }}</span>
+              </div>
+              <div v-if="task.userRecord.userAnswer" class="progress-info">
+                <span class="progress-label">上次答案:</span>
+                <span class="progress-value">{{ task.userRecord.userAnswer }}</span>
+              </div>
+              <div v-if="task.userRecord.completedAt" class="progress-info">
+                <span class="progress-label">完成时间:</span>
+                <span class="progress-value">{{ formatDate(task.userRecord.completedAt) }}</span>
+              </div>
+            </div>
             
             <div class="task-footer">
               <el-tag 
@@ -365,6 +402,11 @@ const submitting = ref(false)
 const userAnswer = ref('')
 const userAnswerArray = ref([])
 
+// 加载状态
+const areasLoading = ref(false)
+const tasksLoading = ref(false)
+const progressLoading = ref(false)
+
 // 活动ID
 const activityId = computed(() => route.params.id)
 
@@ -439,6 +481,8 @@ const fetchAreas = async () => {
       throw new Error('活动ID无效')
     }
     
+    areasLoading.value = true
+    
     console.log('🔄 获取区域列表，活动ID:', activityId.value)
     console.log('🔍 当前用户信息:', userStore.user)
     console.log('🔍 用户ID字段:', {
@@ -462,6 +506,8 @@ const fetchAreas = async () => {
   } catch (error) {
     console.error('❌ 获取区域列表失败:', error)
     ElMessage.error('获取区域列表失败: ' + error.message)
+  } finally {
+    areasLoading.value = false
   }
 }
 
@@ -473,6 +519,8 @@ const fetchUserProgress = async () => {
       throw new Error('活动ID无效')
     }
     
+    progressLoading.value = true
+    
     console.log('🔄 获取用户进度，活动ID:', activityId.value)
     const userId = userStore.user?.id || userStore.user?._id || userStore.user?.userId
     const response = await getUserProgress(activityId.value, userId)
@@ -483,6 +531,8 @@ const fetchUserProgress = async () => {
     }
   } catch (error) {
     console.error('❌ 获取用户进度失败:', error)
+  } finally {
+    progressLoading.value = false
   }
 }
 
@@ -504,14 +554,27 @@ const selectArea = async (area) => {
 // 获取区域任务
 const fetchAreaTasks = async (areaId) => {
   try {
+    tasksLoading.value = true
+    
     const userId = userStore.user?.id || userStore.user?._id || userStore.user?.userId
+    console.log('🔄 获取区域任务，区域ID:', areaId, '用户ID:', userId)
     const response = await getAreaTasks(areaId, userId)
     if (response.code === 200) {
       tasks.value = response.data.tasks
+      console.log('✅ 区域任务获取成功:', tasks.value.length, '个任务')
+      console.log('🔍 任务详情:', tasks.value.map(task => ({
+        title: task.title,
+        userRecord: task.userRecord ? {
+          isCorrect: task.userRecord.isCorrect,
+          attemptCount: task.userRecord.attemptCount
+        } : null
+      })))
     }
   } catch (error) {
-    console.error('获取区域任务失败:', error)
+    console.error('❌ 获取区域任务失败:', error)
     ElMessage.error('获取区域任务失败')
+  } finally {
+    tasksLoading.value = false
   }
 }
 
@@ -664,6 +727,19 @@ const getDifficultyType = (difficulty) => {
     hard: 'danger'
   }
   return types[difficulty] || 'info'
+}
+
+// 格式化日期
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 onMounted(async () => {
@@ -1135,5 +1211,52 @@ onMounted(async () => {
     gap: 12px;
     text-align: center;
   }
+}
+
+/* 加载状态样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  gap: 20px;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 答题情况显示样式 */
+.task-progress {
+  margin: 12px 0;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #409eff;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.progress-info:last-child {
+  margin-bottom: 0;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.progress-value {
+  font-size: 12px;
+  color: #333;
+  font-weight: 600;
 }
 </style>
