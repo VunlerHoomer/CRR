@@ -177,37 +177,38 @@
           />
         </el-form-item>
         
-        <el-form-item label="活动地点">
+        <el-form-item label="活动地点" prop="location">
           <el-input v-model="formData.location" placeholder="请输入活动地点"></el-input>
         </el-form-item>
         
-        <el-form-item label="最大人数">
+        <el-form-item label="最大人数" prop="maxParticipants">
           <el-input-number 
             v-model="formData.maxParticipants" 
-            :min="0"
-            placeholder="0表示不限制"
+            :min="1"
+            placeholder="最少1人"
           />
         </el-form-item>
         
+        <el-form-item label="报名截止时间" prop="registrationDeadline">
+          <el-date-picker
+            v-model="formData.registrationDeadline"
+            type="datetime"
+            placeholder="选择报名截止时间"
+            format="YYYY-MM-DD HH:mm"
+            value-format="YYYY-MM-DDTHH:mm:ss.SSSZ"
+          />
+        </el-form-item>
+        
+        <el-form-item label="活动难度">
+          <el-radio-group v-model="formData.difficulty">
+            <el-radio label="简单">简单</el-radio>
+            <el-radio label="中等">中等</el-radio>
+            <el-radio label="困难">困难</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        
         <el-form-item label="封面图片">
-          <el-input v-model="formData.coverImage" placeholder="请输入封面图片URL"></el-input>
-        </el-form-item>
-        
-        <el-form-item label="活动标签">
-          <el-input 
-            v-model="tagsInput" 
-            placeholder="请输入标签，用逗号分隔"
-            @blur="updateTags"
-          ></el-input>
-        </el-form-item>
-        
-        <el-form-item label="活动内容">
-          <el-input 
-            v-model="formData.content" 
-            type="textarea"
-            :rows="5"
-            placeholder="请输入活动详细内容"
-          ></el-input>
+          <el-input v-model="formData.banner" placeholder="请输入封面图片URL"></el-input>
         </el-form-item>
       </el-form>
       
@@ -262,14 +263,13 @@ const formData = reactive({
   startDate: null,
   endDate: null,
   location: '',
-  maxParticipants: 0,
-  tags: [],
-  coverImage: '',
-  content: ''
+  maxParticipants: 100,
+  registrationDeadline: null,
+  difficulty: '中等',
+  requirements: [],
+  rewards: [],
+  banner: ''
 })
-
-// 标签输入
-const tagsInput = ref('')
 
 // 表单验证规则
 const formRules = {
@@ -348,15 +348,6 @@ const getStatusText = (status) => {
   return texts[status] || status
 }
 
-// 更新标签
-const updateTags = () => {
-  if (tagsInput.value) {
-    formData.tags = tagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag)
-  } else {
-    formData.tags = []
-  }
-}
-
 // 创建活动
 const handleCreate = () => {
   dialogMode.value = 'create'
@@ -371,13 +362,13 @@ const handleCreate = () => {
     startDate: null,
     endDate: null,
     location: '',
-    maxParticipants: 0,
-    tags: [],
-    coverImage: '',
-    content: ''
+    maxParticipants: 100,
+    registrationDeadline: null,
+    difficulty: '中等',
+    requirements: [],
+    rewards: [],
+    banner: ''
   })
-  
-  tagsInput.value = ''
   
   dialogVisible.value = true
 }
@@ -396,13 +387,13 @@ const handleEdit = (activity) => {
     startDate: activity.startDate,
     endDate: activity.endDate,
     location: activity.location || '',
-    maxParticipants: activity.maxParticipants || 0,
-    tags: activity.tags || [],
-    coverImage: activity.coverImage || '',
-    content: activity.content || ''
+    maxParticipants: activity.maxParticipants || 100,
+    registrationDeadline: activity.registrationDeadline,
+    difficulty: activity.difficulty || '中等',
+    requirements: activity.requirements || [],
+    rewards: activity.rewards || [],
+    banner: activity.banner || ''
   })
-  
-  tagsInput.value = (activity.tags || []).join(', ')
   
   dialogVisible.value = true
 }
@@ -415,9 +406,6 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     
     submitting.value = true
-    
-    // 更新标签
-    updateTags()
     
     let response
     

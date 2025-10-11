@@ -19,11 +19,6 @@ router.get('/list', async (req, res) => {
     
     const query = {}
     
-    // 按类型筛选
-    if (type && type !== 'all') {
-      query.type = type
-    }
-    
     // 按状态筛选
     if (status && status !== 'all') {
       query.status = status
@@ -39,10 +34,61 @@ router.get('/list', async (req, res) => {
     
     const skip = (page - 1) * limit
     const total = await Activity.countDocuments(query)
-    const activities = await Activity.find(query)
+    let activities = await Activity.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
+    
+    // 按类型筛选（使用虚拟字段activityType）
+    if (type && type !== 'all') {
+      const now = new Date()
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      
+      if (type === 'new') {
+        query.startTime = { $gt: thirtyDaysAgo }
+      } else if (type === 'old') {
+        query.startTime = { $lte: thirtyDaysAgo }
+      }
+      
+      // 重新查询
+      const filteredTotal = await Activity.countDocuments(query)
+      activities = await Activity.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+      
+      // 为每个活动添加type字段
+      activities = activities.map(activity => {
+        const activityObj = activity.toObject()
+        activityObj.type = activity.activityType
+        activityObj.startDate = activity.startTime
+        activityObj.endDate = activity.endTime
+        return activityObj
+      })
+      
+      return res.json({
+        code: 200,
+        message: '获取成功',
+        data: {
+          activities,
+          pagination: {
+            total: filteredTotal,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            pages: Math.ceil(filteredTotal / limit)
+          }
+        }
+      })
+    }
+    
+    // 为每个活动添加type字段和日期字段映射
+    activities = activities.map(activity => {
+      const activityObj = activity.toObject()
+      activityObj.type = activity.activityType
+      activityObj.startDate = activity.startTime
+      activityObj.endDate = activity.endTime
+      return activityObj
+    })
     
     res.json({
       code: 200,
@@ -99,15 +145,16 @@ router.post('/', async (req, res) => {
     const {
       title,
       description,
-      type,
       status,
       startDate,
       endDate,
       location,
       maxParticipants,
-      tags,
-      coverImage,
-      content
+      registrationDeadline,
+      difficulty,
+      requirements,
+      rewards,
+      banner
     } = req.body
     
     // 验证必填字段
@@ -118,19 +165,26 @@ router.post('/', async (req, res) => {
       })
     }
     
+    // 设置默认值
+    const now = new Date()
+    const defaultStartTime = startDate ? new Date(startDate) : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7天后
+    const defaultEndTime = endDate ? new Date(endDate) : new Date(defaultStartTime.getTime() + 3 * 60 * 60 * 1000) // 开始后3小时
+    const defaultRegistrationDeadline = registrationDeadline ? new Date(registrationDeadline) : new Date(defaultStartTime.getTime() - 24 * 60 * 60 * 1000) // 开始前1天
+    
     // 创建活动
     const activity = new Activity({
       title,
-      description: description || '',
-      type: type || 'new',
+      description: description || '暂无描述',
+      banner: banner || '/images/default-activity.jpg',
+      startTime: defaultStartTime,
+      endTime: defaultEndTime,
+      location: location || '待定',
+      maxParticipants: maxParticipants || 100,
+      registrationDeadline: defaultRegistrationDeadline,
+      difficulty: difficulty || '中等',
       status: status || 'upcoming',
-      startDate: startDate ? new Date(startDate) : null,
-      endDate: endDate ? new Date(endDate) : null,
-      location: location || '',
-      maxParticipants: maxParticipants || 0,
-      tags: tags || [],
-      coverImage: coverImage || '',
-      content: content || ''
+      requirements: requirements || [],
+      rewards: rewards || []
     })
     
     await activity.save()
@@ -156,15 +210,16 @@ router.put('/:id', async (req, res) => {
     const {
       title,
       description,
-      type,
       status,
       startDate,
       endDate,
       location,
       maxParticipants,
-      tags,
-      coverImage,
-      content
+      registrationDeadline,
+      difficulty,
+      requirements,
+      rewards,
+      banner
     } = req.body
     
     const activity = await Activity.findById(id)
@@ -179,15 +234,16 @@ router.put('/:id', async (req, res) => {
     // 更新字段
     if (title !== undefined) activity.title = title
     if (description !== undefined) activity.description = description
-    if (type !== undefined) activity.type = type
     if (status !== undefined) activity.status = status
-    if (startDate !== undefined) activity.startDate = startDate ? new Date(startDate) : null
-    if (endDate !== undefined) activity.endDate = endDate ? new Date(endDate) : null
+    if (startDate !== undefined) activity.startTime = new Date(startDate)
+    if (endDate !== undefined) activity.endTime = new Date(endDate)
     if (location !== undefined) activity.location = location
     if (maxParticipants !== undefined) activity.maxParticipants = maxParticipants
-    if (tags !== undefined) activity.tags = tags
-    if (coverImage !== undefined) activity.coverImage = coverImage
-    if (content !== undefined) activity.content = content
+    if (registrationDeadline !== undefined) activity.registrationDeadline = new Date(registrationDeadline)
+    if (difficulty !== undefined) activity.difficulty = difficulty
+    if (requirements !== undefined) activity.requirements = requirements
+    if (rewards !== undefined) activity.rewards = rewards
+    if (banner !== undefined) activity.banner = banner
     
     await activity.save()
     
@@ -205,7 +261,7 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// 更新活动状态（新活动/旧活动）
+// 更新活动类型（通过修改startTime来改变虚拟字段activityType）
 router.patch('/:id/type', async (req, res) => {
   try {
     const { id } = req.params
@@ -227,19 +283,28 @@ router.patch('/:id/type', async (req, res) => {
       })
     }
     
-    activity.type = type
+    // 通过修改startTime来改变活动类型
+    const now = new Date()
+    if (type === 'new') {
+      // 设为新活动：startTime设为最近7天内
+      activity.startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    } else {
+      // 设为旧活动：startTime设为30天以前
+      activity.startTime = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+    }
+    
     await activity.save()
     
     res.json({
       code: 200,
-      message: '状态更新成功',
+      message: '活动类型已更新',
       data: activity
     })
   } catch (error) {
-    console.error('更新活动状态失败:', error)
+    console.error('更新活动类型失败:', error)
     res.status(500).json({
       code: 500,
-      message: error.message || '更新活动状态失败'
+      message: error.message || '更新活动类型失败'
     })
   }
 })
