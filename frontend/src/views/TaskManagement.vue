@@ -441,12 +441,23 @@ const fetchAreas = async () => {
     
     console.log('🔄 获取区域列表，活动ID:', activityId.value)
     console.log('🔍 当前用户信息:', userStore.user)
-    console.log('🔍 用户ID:', userStore.user?.id || userStore.user?._id || userStore.user?.userId)
+    console.log('🔍 用户ID字段:', {
+      id: userStore.user?.id,
+      _id: userStore.user?._id,
+      userId: userStore.user?.userId,
+      rawUser: userStore.user
+    })
     const userId = userStore.user?.id || userStore.user?._id || userStore.user?.userId
+    console.log('🔍 最终使用的用户ID:', userId)
     const response = await getActivityAreas(activityId.value, userId)
+    console.log('🔍 API响应:', response)
     if (response.code === 200) {
       areas.value = response.data.areas
       console.log('✅ 区域列表获取成功:', areas.value.length)
+      console.log('🔍 区域进度详情:', areas.value.map(area => ({
+        name: area.name,
+        progress: area.progress
+      })))
     }
   } catch (error) {
     console.error('❌ 获取区域列表失败:', error)
