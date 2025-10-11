@@ -61,7 +61,7 @@ router.get('/areas/:activityId', async (req, res) => {
         isUnlocked = true // 第一个区域总是解锁
       } else {
         const previousArea = areas[i - 1]
-        const previousProgress = progressByArea[previousArea._id.toString()]
+        const previousProgress = progressByArea[previousArea._id.toString()] || { completedTasks: 0 }
         const previousTotalTasks = await Task.countDocuments({
           area: previousArea._id,
           activity: activityId,
@@ -69,7 +69,7 @@ router.get('/areas/:activityId', async (req, res) => {
         })
         // 只有当前置区域有任务且全部完成时，当前区域才解锁
         if (previousTotalTasks > 0) {
-          isUnlocked = previousProgress && previousProgress.completedTasks === previousTotalTasks
+          isUnlocked = previousProgress.completedTasks === previousTotalTasks
         } else {
           // 如果前置区域没有任务，当前区域保持锁定状态
           isUnlocked = false
