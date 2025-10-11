@@ -12,9 +12,10 @@ router.get('/test', (req, res) => {
 })
 
 // 获取活动区域列表 - 从数据库获取真实数据
-router.get('/areas/:activityId', async (req, res) => {
+router.get('/areas/:activityId', require('../../middleware/auth'), async (req, res) => {
   try {
     const { activityId } = req.params
+    const userId = req.user._id
     
     // 检查数据库连接状态
     if (mongoose.connection.readyState !== 1) {
@@ -25,24 +26,82 @@ router.get('/areas/:activityId', async (req, res) => {
     }
 
     const Area = require('../models/Area')
+    const Task = require('../models/Task')
+    const TaskRecord = require('../models/TaskRecord')
+    
     const areas = await Area.find({ 
       activity: activityId,
       isActive: true 
     }).sort({ order: 1 })
 
-    // 转换为前端需要的格式
-    const formattedAreas = areas.map(area => ({
-      _id: area._id,
-      name: area.name,
-      description: area.description,
-      order: area.order,
-      progress: {
-        completed: 0, // 暂时设为0，后续可以计算真实进度
-        total: 3,     // 暂时设为3，后续可以计算真实任务数
-        percentage: 0,
-        isCompleted: false
+    // 获取用户在该活动中的所有答题记录
+    const userRecords = await TaskRecord.find({
+      user: userId,
+      activity: activityId,
+      isCorrect: true
+    }).populate('task')
+
+    // 按区域分组统计
+    const progressByArea = {}
+    userRecords.forEach(record => {
+      const areaId = record.task.area.toString()
+      if (!progressByArea[areaId]) {
+        progressByArea[areaId] = {
+          completedTasks: 0,
+          totalPoints: 0
+        }
       }
-    }))
+      progressByArea[areaId].completedTasks += 1
+      progressByArea[areaId].totalPoints += record.pointsEarned
+    })
+
+    // 转换为前端需要的格式，包含解锁状态
+    const formattedAreas = []
+    
+    for (let i = 0; i < areas.length; i++) {
+      const area = areas[i]
+      
+      // 获取该区域的任务总数
+      const totalTasks = await Task.countDocuments({
+        area: area._id,
+        activity: activityId,
+        isActive: true
+      })
+      
+      const userProgress = progressByArea[area._id.toString()] || { completedTasks: 0, totalPoints: 0 }
+      const completedTasks = userProgress.completedTasks
+      const isCompleted = completedTasks === totalTasks && totalTasks > 0
+      
+      // 检查是否解锁：第一个区域直接解锁，其他区域需要前一个区域完成
+      let isUnlocked = false
+      if (i === 0) {
+        isUnlocked = true // 第一个区域总是解锁
+      } else {
+        const previousArea = areas[i - 1]
+        const previousProgress = progressByArea[previousArea._id.toString()]
+        const previousTotalTasks = await Task.countDocuments({
+          area: previousArea._id,
+          activity: activityId,
+          isActive: true
+        })
+        isUnlocked = previousProgress && previousProgress.completedTasks === previousTotalTasks && previousTotalTasks > 0
+      }
+      
+      formattedAreas.push({
+        _id: area._id,
+        name: area.name,
+        description: area.description,
+        order: area.order,
+        isUnlocked,
+        progress: {
+          completed: completedTasks,
+          total: totalTasks,
+          percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+          isCompleted,
+          totalPoints: userProgress.totalPoints
+        }
+      })
+    }
 
     res.json({
       code: 200,
@@ -88,7 +147,7 @@ router.get('/progress/:activityId', (req, res) => {
 })
 
 // 提交任务答案
-router.post('/:taskId/submit', async (req, res) => {
+router.post('/:taskId/submit', require('../../middleware/auth'), async (req, res) => {
   try {
     const { taskId } = req.params
     const { answer } = req.body
@@ -153,14 +212,60 @@ router.post('/:taskId/submit', async (req, res) => {
       }
     }
 
-    // 记录答题结果（暂时不保存到数据库，后续可以添加TaskRecord）
+    // 保存答题记录到数据库
+    const TaskRecord = require('../models/TaskRecord')
+    
+    // 查找或创建答题记录
+    let taskRecord = await TaskRecord.findOne({
+      user: req.user._id,
+      task: task._id
+    })
+
+    if (taskRecord) {
+      // 更新现有记录
+      taskRecord.userAnswer = answer
+      taskRecord.isCorrect = isCorrect
+      taskRecord.pointsEarned = isCorrect ? task.points : 0
+      taskRecord.attemptCount += 1
+      taskRecord.errorCount += isCorrect ? 0 : 1
+      taskRecord.submittedAt = new Date()
+      
+      if (isCorrect && !taskRecord.completedAt) {
+        taskRecord.completedAt = new Date()
+      }
+      
+      await taskRecord.save()
+    } else {
+      // 创建新记录
+      taskRecord = new TaskRecord({
+        user: req.user._id,
+        activity: task.activity,
+        area: task.area,
+        task: task._id,
+        userAnswer: answer,
+        isCorrect,
+        pointsEarned: isCorrect ? task.points : 0,
+        attemptCount: 1,
+        errorCount: isCorrect ? 0 : 1,
+        submittedAt: new Date(),
+        completedAt: isCorrect ? new Date() : null
+      })
+      
+      await taskRecord.save()
+    }
+
     const result = {
       taskId: task._id,
       userAnswer: answer,
       correctAnswer: task.correctAnswer,
       isCorrect,
       points: isCorrect ? task.points : 0,
-      feedback
+      feedback,
+      taskRecord: {
+        id: taskRecord._id,
+        attemptCount: taskRecord.attemptCount,
+        completedAt: taskRecord.completedAt
+      }
     }
 
     res.json({
@@ -179,9 +284,10 @@ router.post('/:taskId/submit', async (req, res) => {
 })
 
 // 获取区域任务列表
-router.get('/area/:areaId/tasks', async (req, res) => {
+router.get('/area/:areaId/tasks', require('../../middleware/auth'), async (req, res) => {
   try {
     const { areaId } = req.params
+    const userId = req.user._id
     
     // 检查数据库连接状态
     if (mongoose.connection.readyState !== 1) {
@@ -193,34 +299,60 @@ router.get('/area/:areaId/tasks', async (req, res) => {
 
     // 从数据库获取真实的任务数据
     const Task = require('../models/Task')
+    const TaskRecord = require('../models/TaskRecord')
+    
     const tasks = await Task.find({ 
       area: areaId,
       isActive: true 
     }).sort({ order: 1, createdAt: 1 })
 
-    // 转换为前端需要的格式
-    const formattedTasks = tasks.map(task => ({
-      _id: task._id,
-      title: task.title,
-      description: task.description,
-      question: task.question,
-      questionType: task.questionType,
-      options: task.options || [],
-      correctAnswer: task.correctAnswer,
-      correctAnswers: task.correctAnswers || [],
-      answerMatchType: task.answerMatchType,
-      caseSensitive: task.caseSensitive,
-      numberTolerance: task.numberTolerance,
-      hint: task.hint,
-      points: task.points,
-      order: task.order,
-      maxAttempts: task.maxAttempts,
-      isActive: task.isActive,
-      difficulty: task.difficulty,
-      // 兼容前端可能使用的字段名
-      type: task.questionType,
-      answer: task.correctAnswer
-    }))
+    // 获取用户的答题记录
+    const userRecords = await TaskRecord.find({
+      user: userId,
+      task: { $in: tasks.map(t => t._id) }
+    })
+
+    const recordMap = {}
+    userRecords.forEach(record => {
+      recordMap[record.task.toString()] = record
+    })
+
+    // 转换为前端需要的格式，包含用户进度
+    const formattedTasks = tasks.map(task => {
+      const userRecord = recordMap[task._id.toString()]
+      
+      return {
+        _id: task._id,
+        title: task.title,
+        description: task.description,
+        question: task.question,
+        questionType: task.questionType,
+        options: task.options || [],
+        correctAnswer: task.correctAnswer,
+        correctAnswers: task.correctAnswers || [],
+        answerMatchType: task.answerMatchType,
+        caseSensitive: task.caseSensitive,
+        numberTolerance: task.numberTolerance,
+        hint: task.hint,
+        points: task.points,
+        order: task.order,
+        maxAttempts: task.maxAttempts,
+        isActive: task.isActive,
+        difficulty: task.difficulty,
+        // 兼容前端可能使用的字段名
+        type: task.questionType,
+        answer: task.correctAnswer,
+        // 用户进度信息
+        userProgress: userRecord ? {
+          isCompleted: userRecord.isCorrect,
+          userAnswer: userRecord.userAnswer,
+          pointsEarned: userRecord.pointsEarned,
+          attemptCount: userRecord.attemptCount,
+          completedAt: userRecord.completedAt,
+          submittedAt: userRecord.submittedAt
+        } : null
+      }
+    })
 
     res.json({
       code: 200,
