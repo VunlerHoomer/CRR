@@ -5,6 +5,16 @@ const Activity = require('../../models/Activity')
 // 获取活动列表（支持分页和筛选）
 router.get('/list', async (req, res) => {
   try {
+    const mongoose = require('mongoose')
+    
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接'
+      })
+    }
+    
     const { page = 1, limit = 20, type, status, search } = req.query
     
     const query = {}
