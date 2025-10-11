@@ -440,7 +440,10 @@ const fetchAreas = async () => {
     }
     
     console.log('🔄 获取区域列表，活动ID:', activityId.value)
-    const response = await getActivityAreas(activityId.value, userStore.user?.id)
+    console.log('🔍 当前用户信息:', userStore.user)
+    console.log('🔍 用户ID:', userStore.user?.id || userStore.user?._id || userStore.user?.userId)
+    const userId = userStore.user?.id || userStore.user?._id || userStore.user?.userId
+    const response = await getActivityAreas(activityId.value, userId)
     if (response.code === 200) {
       areas.value = response.data.areas
       console.log('✅ 区域列表获取成功:', areas.value.length)
@@ -460,7 +463,8 @@ const fetchUserProgress = async () => {
     }
     
     console.log('🔄 获取用户进度，活动ID:', activityId.value)
-    const response = await getUserProgress(activityId.value, userStore.user?.id)
+    const userId = userStore.user?.id || userStore.user?._id || userStore.user?.userId
+    const response = await getUserProgress(activityId.value, userId)
     if (response.code === 200) {
       userStats.value = response.data.stats
       areaProgress.value = response.data.areaProgress
@@ -489,7 +493,8 @@ const selectArea = async (area) => {
 // 获取区域任务
 const fetchAreaTasks = async (areaId) => {
   try {
-    const response = await getAreaTasks(areaId, userStore.user?.id)
+    const userId = userStore.user?.id || userStore.user?._id || userStore.user?.userId
+    const response = await getAreaTasks(areaId, userId)
     if (response.code === 200) {
       tasks.value = response.data.tasks
     }
@@ -564,7 +569,9 @@ const submitAnswer = async () => {
       answer = userAnswerArray.value
     }
     
-    const response = await submitTaskAnswer(currentTask.value._id, answer, userStore.user?.id)
+    const userId = userStore.user?.id || userStore.user?._id || userStore.user?.userId
+    console.log('🔍 提交答案，用户ID:', userId)
+    const response = await submitTaskAnswer(currentTask.value._id, answer, userId)
     
     if (response.code === 200) {
       if (response.data.isCorrect) {

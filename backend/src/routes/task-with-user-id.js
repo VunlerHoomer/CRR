@@ -41,7 +41,11 @@ router.get('/areas/:activityId', async (req, res) => {
     const userRecords = []
     const progressByArea = {}
     
+    console.log('🔍 查询用户答题记录:', { userId, activityId })
+    console.log('🔍 内存中的记录总数:', taskRecords.size)
+    
     for (const [key, record] of taskRecords.entries()) {
+      console.log('🔍 检查记录:', { key, recordUserId: record.userId, recordActivityId: record.activityId, isCorrect: record.isCorrect })
       if (key.startsWith(`${userId}_${activityId}_`) && record.isCorrect) {
         userRecords.push(record)
         const areaId = record.areaId
@@ -53,8 +57,11 @@ router.get('/areas/:activityId', async (req, res) => {
         }
         progressByArea[areaId].completedTasks += 1
         progressByArea[areaId].totalPoints += record.pointsEarned
+        console.log('✅ 找到匹配记录:', { areaId, completedTasks: progressByArea[areaId].completedTasks })
       }
     }
+    
+    console.log('📊 用户答题记录统计:', { userRecords: userRecords.length, progressByArea })
 
     // 转换为前端需要的格式，包含解锁状态
     const formattedAreas = []
@@ -263,12 +270,28 @@ router.post('/:taskId/submit', async (req, res) => {
       const userAnswer = String(answer || '').trim()
       const correctAnswer = String(task.correctAnswer || '').trim()
       
+      console.log('🔍 答案验证:', {
+        userAnswer,
+        correctAnswer,
+        answerMatchType: task.answerMatchType,
+        caseSensitive: task.caseSensitive
+      })
+      
       if (task.answerMatchType === 'exact') {
         // 精确匹配
         isCorrect = userAnswer === correctAnswer
+        if (!isCorrect && !task.caseSensitive) {
+          isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase()
+        }
       } else if (task.answerMatchType === 'contains') {
-        // 包含匹配
-        isCorrect = userAnswer.includes(correctAnswer) || correctAnswer.includes(userAnswer)
+        // 包含匹配 - 更严格的逻辑
+        if (task.caseSensitive) {
+          // 大小写敏感：用户答案必须包含正确答案
+          isCorrect = userAnswer.includes(correctAnswer)
+        } else {
+          // 大小写不敏感：用户答案必须包含正确答案
+          isCorrect = userAnswer.toLowerCase().includes(correctAnswer.toLowerCase())
+        }
       } else if (task.answerMatchType === 'number') {
         // 数字匹配
         const userNum = parseFloat(userAnswer)
@@ -283,12 +306,12 @@ router.post('/:taskId/submit', async (req, res) => {
       } else {
         // 默认精确匹配
         isCorrect = userAnswer === correctAnswer
+        if (!isCorrect && !task.caseSensitive) {
+          isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase()
+        }
       }
       
-      // 大小写处理
-      if (!task.caseSensitive && !isCorrect) {
-        isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase()
-      }
+      console.log('✅ 验证结果:', { isCorrect, userAnswer, correctAnswer })
     }
 
     // 生成反馈信息
