@@ -109,7 +109,8 @@
             v-for="area in areas" 
             :key="area._id"
             class="area-card"
-            @click="selectArea(area)"
+            :class="{ 'locked': !area.isUnlocked }"
+            @click="handleAreaClick(area)"
           >
             <div class="area-header">
               <span class="area-icon">{{ area.icon || '📍' }}</span>
@@ -128,7 +129,14 @@
             </div>
             <div class="area-status">
               <el-tag 
-                v-if="area.progress.isCompleted" 
+                v-if="!area.isUnlocked" 
+                type="danger" 
+                size="small"
+              >
+                已锁定
+              </el-tag>
+              <el-tag 
+                v-else-if="area.progress.isCompleted" 
                 type="success" 
                 size="small"
               >
@@ -464,6 +472,15 @@ const fetchUserProgress = async () => {
 }
 
 // 选择区域
+// 处理区域点击
+const handleAreaClick = (area) => {
+  if (!area.isUnlocked) {
+    ElMessage.warning('该区域尚未解锁，请先完成前置区域的所有任务')
+    return
+  }
+  selectArea(area)
+}
+
 const selectArea = async (area) => {
   currentArea.value = area
   await fetchAreaTasks(area._id)
@@ -853,6 +870,17 @@ onMounted(async () => {
 .area-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.area-card.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+.area-card.locked:hover {
+  transform: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .area-header {
