@@ -110,6 +110,7 @@ export const useAdminStore = defineStore('admin', () => {
     get: (url, config) => adminRequest.get(url, config),
     post: (url, data, config) => adminRequest.post(url, data, config),
     put: (url, data, config) => adminRequest.put(url, data, config),
+    patch: (url, data, config) => adminRequest.patch(url, data, config),
     delete: (url, config) => adminRequest.delete(url, config)
   }
 
