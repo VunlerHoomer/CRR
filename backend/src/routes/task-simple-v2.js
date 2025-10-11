@@ -11,8 +11,8 @@ router.get('/test', (req, res) => {
   })
 })
 
-// 获取活动区域列表 - 简化版本，暂时不包含解锁逻辑
-router.get('/areas/:activityId', (req, res) => {
+// 获取活动区域列表 - 使用真实数据库数据
+router.get('/areas/:activityId', async (req, res) => {
   try {
     const { activityId } = req.params
     
@@ -24,55 +24,73 @@ router.get('/areas/:activityId', (req, res) => {
       })
     }
 
-    // 暂时返回简单的区域数据
+    // 从数据库获取真实的区域数据
+    const Area = require('../models/Area')
+    const Task = require('../models/Task')
+    const TaskRecord = require('../models/TaskRecord')
+    
+    const areas = await Area.find({ 
+      activity: activityId,
+      isActive: true 
+    }).sort({ order: 1 })
+
+    // 获取用户在该活动中的所有答题记录（暂时设为空，因为没有用户认证）
+    const userRecords = []
+    const progressByArea = {}
+
+    // 转换为前端需要的格式，包含解锁状态
+    const formattedAreas = []
+    
+    for (let i = 0; i < areas.length; i++) {
+      const area = areas[i]
+      
+      // 获取该区域的任务总数
+      const totalTasks = await Task.countDocuments({
+        area: area._id,
+        activity: activityId,
+        isActive: true
+      })
+      
+      const userProgress = progressByArea[area._id.toString()] || { completedTasks: 0, totalPoints: 0 }
+      const completedTasks = userProgress.completedTasks
+      const isCompleted = completedTasks === totalTasks && totalTasks > 0
+      
+      // 检查是否解锁：第一个区域直接解锁，其他区域需要前一个区域完成
+      let isUnlocked = false
+      if (i === 0) {
+        isUnlocked = true // 第一个区域总是解锁
+      } else {
+        const previousArea = areas[i - 1]
+        const previousProgress = progressByArea[previousArea._id.toString()]
+        const previousTotalTasks = await Task.countDocuments({
+          area: previousArea._id,
+          activity: activityId,
+          isActive: true
+        })
+        isUnlocked = previousProgress && previousProgress.completedTasks === previousTotalTasks && previousTotalTasks > 0
+      }
+      
+      formattedAreas.push({
+        _id: area._id,
+        name: area.name,
+        description: area.description || '',
+        order: area.order,
+        isUnlocked,
+        progress: {
+          completed: completedTasks,
+          total: totalTasks,
+          percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+          isCompleted,
+          totalPoints: userProgress.totalPoints
+        }
+      })
+    }
+
     res.json({
       code: 200,
       message: '获取成功',
       data: { 
-        areas: [
-          {
-            _id: '68e81442c2de63f9e6bde880',
-            name: '文庙',
-            description: '',
-            order: 0,
-            isUnlocked: true, // 第一个区域总是解锁
-            progress: {
-              completed: 0,
-              total: 2,
-              percentage: 0,
-              isCompleted: false,
-              totalPoints: 0
-            }
-          },
-          {
-            _id: '68e9df65caee8e2d06fa2142',
-            name: '桃花坞',
-            description: '',
-            order: 1,
-            isUnlocked: false, // 需要完成第一个区域
-            progress: {
-              completed: 0,
-              total: 2,
-              percentage: 0,
-              isCompleted: false,
-              totalPoints: 0
-            }
-          },
-          {
-            _id: '68e9dfbdcaee8e2d06fa2157',
-            name: '仓街',
-            description: '',
-            order: 2,
-            isUnlocked: false, // 需要完成第二个区域
-            progress: {
-              completed: 0,
-              total: 2,
-              percentage: 0,
-              isCompleted: false,
-              totalPoints: 0
-            }
-          }
-        ]
+        areas: formattedAreas
       }
     })
   } catch (error) {
@@ -160,59 +178,74 @@ router.post('/:taskId/submit', (req, res) => {
   }
 })
 
-// 获取区域任务列表 - 简化版本
-router.get('/area/:areaId/tasks', (req, res) => {
+// 获取区域任务列表 - 使用真实数据库数据
+router.get('/area/:areaId/tasks', async (req, res) => {
   try {
     const { areaId } = req.params
     
-    // 根据区域ID返回不同的任务
-    let tasks = []
-    
-    if (areaId === '68e81442c2de63f9e6bde880') {
-      // 文庙区域
-      tasks = [
-        {
-          _id: '68e8145feccf1de242ad114b',
-          title: 'A1',
-          description: '',
-          question: '111',
-          questionType: 'text',
-          options: [],
-          correctAnswer: '11',
-          points: 10,
-          order: 1,
-          isActive: true,
-          type: 'text',
-          answer: '11',
-          userProgress: null
-        },
-        {
-          _id: '68e94fa6722ab4d4041c990a',
-          title: '11111',
-          description: '11111',
-          question: '11111',
-          questionType: 'text',
-          options: [],
-          correctAnswer: '111',
-          hint: '111',
-          points: 10,
-          order: 2,
-          isActive: true,
-          type: 'text',
-          answer: '111',
-          userProgress: null
-        }
-      ]
-    } else {
-      // 其他区域暂时返回空任务列表
-      tasks = []
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({
+        code: 500,
+        message: '数据库未连接'
+      })
     }
+
+    // 从数据库获取真实的任务数据
+    const Task = require('../models/Task')
+    const TaskRecord = require('../models/TaskRecord')
+    
+    const tasks = await Task.find({ 
+      area: areaId,
+      isActive: true 
+    }).sort({ order: 1, createdAt: 1 })
+
+    // 获取用户的答题记录（暂时设为空，因为没有用户认证）
+    const userRecords = []
+    const recordMap = {}
+
+    // 转换为前端需要的格式，包含用户进度
+    const formattedTasks = tasks.map(task => {
+      const userRecord = recordMap[task._id.toString()]
+      
+      return {
+        _id: task._id,
+        title: task.title,
+        description: task.description || '',
+        question: task.question,
+        questionType: task.questionType,
+        options: task.options || [],
+        correctAnswer: task.correctAnswer,
+        correctAnswers: task.correctAnswers || [],
+        answerMatchType: task.answerMatchType,
+        caseSensitive: task.caseSensitive,
+        numberTolerance: task.numberTolerance,
+        hint: task.hint,
+        points: task.points,
+        order: task.order,
+        maxAttempts: task.maxAttempts,
+        isActive: task.isActive,
+        difficulty: task.difficulty,
+        // 兼容前端可能使用的字段名
+        type: task.questionType,
+        answer: task.correctAnswer,
+        // 用户进度信息
+        userProgress: userRecord ? {
+          isCompleted: userRecord.isCorrect,
+          userAnswer: userRecord.userAnswer,
+          pointsEarned: userRecord.pointsEarned,
+          attemptCount: userRecord.attemptCount,
+          completedAt: userRecord.completedAt,
+          submittedAt: userRecord.submittedAt
+        } : null
+      }
+    })
 
     res.json({
       code: 200,
       message: '获取成功',
       data: { 
-        tasks: tasks
+        tasks: formattedTasks
       }
     })
   } catch (error) {
