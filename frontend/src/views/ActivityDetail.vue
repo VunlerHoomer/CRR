@@ -25,6 +25,29 @@
           <p>{{ activity.description }}</p>
         </div>
 
+        <!-- 溯槎问帙地图 -->
+        <div class="activity-map">
+          <h2>溯槎问帙地图</h2>
+          <div class="map-container">
+            <img 
+              src="/images/activities/suchawenzhi-map.png" 
+              alt="溯槎问帙活动地图"
+              class="activity-map-image"
+            />
+            <div class="map-overlay">
+              <div class="map-legend">
+                <h3>地图说明</h3>
+                <ul>
+                  <li>🏛️ 人大江市 - 起点</li>
+                  <li>🏯 传统建筑 - 检查点</li>
+                  <li>🎓 學大吳東 - 终点</li>
+                  <li>🏢 现代建筑 - 任务点</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="activity-details">
           <h2>活动详情</h2>
           <div class="detail-grid">
@@ -410,6 +433,82 @@ onMounted(async () => {
   color: #666;
   line-height: 1.6;
   font-size: 1.1rem;
+}
+
+/* 溯槎问帙地图样式 */
+.activity-map {
+  margin: 30px 0;
+}
+
+.activity-map h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: #f8f9fa;
+}
+
+.activity-map-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 250px;
+}
+
+.map-legend h3 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.map-legend ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.map-legend li {
+  padding: 4px 0;
+  color: #666;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eee;
+}
+
+.map-legend li:last-child {
+  border-bottom: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .map-overlay {
+    position: static;
+    margin-top: 15px;
+    max-width: none;
+  }
+  
+  .activity-map-image {
+    border-radius: 8px;
+  }
 }
 
 .detail-grid {
